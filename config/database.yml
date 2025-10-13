@@ -1,0 +1,8 @@
+development:
+  adapter: postgresql
+  host: localhost
+  database: fortus_dev
+  username: postgres
+  password: root
+  pool: 40
+  timeout: 5000

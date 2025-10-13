@@ -1,0 +1,73 @@
+<h1>Fortus - NetSuite Integration</h1>
+
+<div class="netsuite-status">
+  <h2>NetSuite Status</h2>
+  
+  <% if netsuite_authenticated? %>
+    <div class="alert alert-success">
+      ✅ Connected to NetSuite
+    </div>
+    
+    <% token_record = Token.netsuite_token %>
+    <% if token_record %>
+      <p><strong>Token expires:</strong> <%= token_record.expires_at.strftime('%Y-%m-%d %H:%M:%S') %></p>
+      <p><strong>Expires in:</strong> <%= token_record.expires_in_seconds %> seconds</p>
+    <% end %>
+  <% else %>
+    <div class="alert alert-warning">
+      ❌ Not connected to NetSuite
+    </div>
+    <p>To connect to NetSuite, you need to complete the OAuth2 flow.</p>
+  <% end %>
+</div>
+
+<div class="instructions">
+  <h3>How to Use</h3>
+  <ol>
+    <li>Set your environment variables in Rails console</li>
+    <li>Get authorization code from NetSuite</li>
+    <li>Exchange code for token using: <code>Netsuite::Base.exchange_code_for_token('your_code')</code></li>
+    <li>Get access token using: <code>Netsuite::Base.get_access_token</code></li>
+  </ol>
+</div>
+
+<style>
+  .netsuite-status {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .alert {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+  }
+  
+  .alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+  }
+  
+  .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+  }
+  
+  .instructions {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+  }
+  
+  code {
+    background-color: #f1f1f1;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+</style>
