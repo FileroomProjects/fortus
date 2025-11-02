@@ -6,7 +6,6 @@ module Netsuite
     # Exchange authorization code for access token and store it
     def self.exchange_code_for_token(code)
       token_url = "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token"
-      
 
       response = HTTParty.post(token_url, {
         body: {

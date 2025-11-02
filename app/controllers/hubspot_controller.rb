@@ -1,2 +1,0 @@
-class HubspotController < ApplicationController
-end
