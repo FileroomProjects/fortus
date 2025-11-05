@@ -1,6 +1,11 @@
 module Netsuite
   class Opportunity
 
+    def self.create(args={})
+      @client = Netsuite::Client.new(args)
+      @client.create_opportunity
+    end
+
     def self.create_opportunity
       @access_token = Netsuite::Base.get_access_token
       body_json = {
@@ -53,7 +58,6 @@ module Netsuite
         }
       )
 
-      binding.pry
       response
     end
    

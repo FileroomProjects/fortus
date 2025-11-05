@@ -20,7 +20,6 @@ module Netsuite
           'Accept' => 'application/json'
         }
       })
-      
       if response.success?
         token_data = response.parsed_response
         
@@ -55,8 +54,7 @@ module Netsuite
     
     def self.refresh_access_token
       token_record = Token.netsuite_token
-      return unless token_record&.refresh_token
-      
+      # return unless token_record&.refresh_token
       token_url = "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token"
       
       response = HTTParty.post(token_url, {

@@ -15,7 +15,7 @@ class Token < ApplicationRecord
   end
   
   def self.netsuite_token
-    netsuite.valid.first
+    netsuite.first
   end
   
   def self.update_netsuite_token(access_token:, refresh_token: nil, expires_in: nil)
