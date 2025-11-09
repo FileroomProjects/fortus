@@ -14,6 +14,13 @@ module Hubspot
       Hubspot::Contact::find_by_deal_id(args[:objectId])
     end
 
+    def associated_contact_details
+      contact_id = Hubspot::Contact::find_by_deal_id(args[:objectId])[:toObjectId]
+      raise "Contact is not present" if contact_id.blank?
+      
+      Hubspot::Contact::find_by_id(contact_id)
+    end
+
     def self.find_by(args)
       @client = Hubspot::Client.new(body: args)
 
@@ -23,6 +30,7 @@ module Hubspot
     def sync_with_netsuite
       @payload = prepare_payload_for_netsuite
       Netsuite::Opportunity.create(@payload)
+      handle_contact_and_update_hubspot
     end
 
     def fetch_prop_field(field_name)
@@ -40,11 +48,11 @@ module Hubspot
         "memo": "Test opportunity created via API new",
         "tranDate": Time.at(fetch_prop_field(:createdate).to_i / 1000).utc.strftime("%Y-%m-%d"),
         "expectedCloseDate": Time.at(fetch_prop_field(:closedate).to_i / 1000).utc.strftime("%Y-%m-%d"),
-        "probability": fetch_prop_field(:hs_deal_stage_probability),
+        "probability": fetch_prop_field(:hs_deal_stage_probability).to_f,
         "entity": { "id": "10004", "type": "customer" },
         "currency": { "id": "1", "type": "currency", "refName": fetch_prop_field(:deal_currency_code) },
         "subsidiary": { "id": "7", "type": "subsidiary" },
-        "salesRep": { "id": fetch_prop_field(:hubspot_owner_id), "type": "contact" },
+        "salesRep": { "id": fetch_prop_field(:hubspot_owner_id).to_i, "type": "contact" },
         "forecastType": { "id": "2", "type": "forecastType" },
         "exchangeRate": 1.0,
         "isBudgetApproved": false,
@@ -60,6 +68,28 @@ module Hubspot
         "total": fetch_prop_field(:hs_projected_amount).to_f,
         "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
       }
+    end
+
+    def handle_contact_and_update_hubspot
+      contact_details = associated_contact_details
+      if contact_details.present?
+        if contact_details[:netsuite_contact_id].present? 
+        else
+          ns_contact = Netsuite::Contact.new(
+            "firstName": contact_details[:firstname]&.fetch("value", ''),
+            "lastName": "Doe",
+            "email": contact_details[:email]&.fetch("value", ''),
+            "jobTitle": contact_details[:jobtitle]&.fetch("value", ''),
+            "isInactive": false,
+            company: { "id": 123, "type": "customer" }
+          ).create
+          if ns_contact && ns_contact[:id].present?
+            Hubspot::Contact.update 
+          end
+        end
+      else
+        Rails.logger.log('Contact detail is blank')
+      end
     end
   end
 end
