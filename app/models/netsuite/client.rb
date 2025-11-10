@@ -16,10 +16,14 @@ module Netsuite
           'Content-Type' => 'application/json'
         }
       )
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect{|a| a["message"]}.join(',')
+
+      if response.code == 204
+        ns_opportunity_id = response.headers[:location].split('/').last if response.headers[:location].present?
+        puts "Netsuite opportunity has been created id: #{ns_opportunity_id}"
+        return { id: ns_opportunity_id }
+      else
+        raise "Netsuite Client opportunity error :" + "#{response.parsed_response}"
       end
-      raise "Netsuite Client opportunity error :" + response.parsed_response["results"]&.first
     end
 
     def create_contact
@@ -36,7 +40,25 @@ module Netsuite
         ns_contact_id = response.headers[:location].split('/').last
         return { id: ns_contact_id }
       else
-        raise "Netsuite Client Contact error :"  + response["errors"].collect{|a| a["message"]}.join(',')
+        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect{|a| a["message"]}.join(',')}"
+      end
+    end
+
+    def search
+      query_str = body.map { |k, v| "#{k} IS \"#{v}\"" }.join(" AND ")
+
+      response = HTTParty.get(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/contact",
+        query: { q: query_str, limit: 1, offset: 0 },
+        headers: {
+          'Authorization' => "Bearer #{access_token}",
+          'Content-Type' => 'application/json'
+        }
+      )
+      if response.code == 200
+        return response.parsed_response
+      else
+        raise "Netsuite Client Contact error :" + "#{response["errors"].collect{|a| a["message"]}.join(',')}"
       end
     end
   end

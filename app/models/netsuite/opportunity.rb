@@ -18,7 +18,7 @@ module Netsuite
         "entity": { "id": "10004", "type": "customer" },
         "currency": { "id": "1", "type": "currency", "refName": "AUD" },
         "subsidiary": { "id": "7", "type": "subsidiary" },
-        "salesRep": { "id": "95066", "type": "contact" },
+        # "salesRep": { "id": "95066", "type": "contact" },
         "forecastType": { "id": "2", "type": "forecastType" },
         "exchangeRate": 1.0,
         "isBudgetApproved": false,

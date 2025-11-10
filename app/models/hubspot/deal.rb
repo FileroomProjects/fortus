@@ -52,7 +52,7 @@ module Hubspot
         "entity": { "id": "10004", "type": "customer" },
         "currency": { "id": "1", "type": "currency", "refName": fetch_prop_field(:deal_currency_code) },
         "subsidiary": { "id": "7", "type": "subsidiary" },
-        "salesRep": { "id": fetch_prop_field(:hubspot_owner_id).to_i, "type": "contact" },
+        # "salesRep": { "id": fetch_prop_field(:hubspot_owner_id).to_i, "type": "contact" },
         "forecastType": { "id": "2", "type": "forecastType" },
         "exchangeRate": 1.0,
         "isBudgetApproved": false,
@@ -73,22 +73,56 @@ module Hubspot
     def handle_contact_and_update_hubspot
       contact_details = associated_contact_details
       if contact_details.present?
-        if contact_details[:netsuite_contact_id].present? 
+        if contact_details[:netsuite_contact_id].present?
+          Rails.logger.info "************ netsuite_contact_id is present"
         else
-          ns_contact = Netsuite::Contact.new(
+          ns_contact = Netsuite::Contact.create(
             "firstName": contact_details[:firstname]&.fetch("value", ''),
             "lastName": "Doe",
             "email": contact_details[:email]&.fetch("value", ''),
             "jobTitle": contact_details[:jobtitle]&.fetch("value", ''),
             "isInactive": false,
             company: { "id": 123, "type": "customer" }
-          ).create
-          if ns_contact && ns_contact[:id].present?
-            Hubspot::Contact.update 
+          )
+          netsuite_contact_id = ns_contact[:id]
+          
+          if ns_contact && netsuite_contact_id.present?
+            Hubspot::Contact.update({
+              contactId: contact_details[:hs_object_id][:value], 
+              "netsuite_contact_id": netsuite_contact_id
+            })
           end
         end
       else
-        Rails.logger.log('Contact detail is blank')
+        Rails.logger.log('************ Contact detail is blank')
+      end
+    end
+
+    def handle_company_and_update_hubspot
+      contact_details = associated_contact_details
+      if contact_details.present?
+        if contact_details[:netsuite_contact_id].present?
+          netsuite_contact_id = contact_details[:netsuite_contact_id]
+          Rails.logger.info "************ netsuite_contact_id is present"
+        else
+          ns_contact = Netsuite::Contact.create(
+            "firstName": contact_details[:firstname]&.fetch("value", ''),
+            "lastName": "Doe",
+            "email": contact_details[:email]&.fetch("value", ''),
+            "jobTitle": contact_details[:jobtitle]&.fetch("value", ''),
+            "isInactive": false,
+            company: { "id": 123, "type": "customer" }
+          )
+          netsuite_contact_id = ns_contact[:id]
+        end
+        if netsuite_contact_id.present?
+          Hubspot::Contact.update({
+            contactId: contact_details[:hs_object_id][:value], 
+            "netsuite_contact_id": netsuite_contact_id
+          })
+        end
+      else
+        Rails.logger.log('************ Contact detail is blank')
       end
     end
   end

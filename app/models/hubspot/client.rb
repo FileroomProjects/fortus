@@ -79,7 +79,7 @@ module Hubspot
       if response.code == 200
         return response.parsed_response
       end
-        raise response.parsed_response.collect{|a| a["message"]}.join(',')
+      raise response.parsed_response.collect{|a| a["message"]}.join(',')
     end
   end
 end
