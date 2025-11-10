@@ -13,7 +13,7 @@ module Netsuite
       @client.create_contact
     end
 
-    def self.find_by(args={})
+    def self.find_by(args = {})
       @client = Netsuite::Client.new(args)
       @client.search
     end
