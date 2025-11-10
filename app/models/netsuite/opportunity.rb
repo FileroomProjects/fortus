@@ -1,7 +1,6 @@
 module Netsuite
   class Opportunity
-
-    def self.create(args={})
+    def self.create(args = {})
       @client = Netsuite::Client.new(args)
       @client.create_opportunity
     end
@@ -43,8 +42,8 @@ module Netsuite
         "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/opportunity",
         body: body_json.to_json,
         headers: {
-          'Authorization' => "Bearer #{@access_token}",
-          'Content-Type' => 'application/json'
+          "Authorization" => "Bearer #{@access_token}",
+          "Content-Type" => "application/json"
         }
       )
 
@@ -52,14 +51,13 @@ module Netsuite
       campaign_response = HTTParty.get(
         "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/opportunity/3512345",
         headers: {
-          'Authorization' => "Bearer #{@access_token}",
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
+          "Authorization" => "Bearer #{@access_token}",
+          "Content-Type" => "application/json",
+          "Accept" => "application/json"
         }
       )
 
       response
     end
-   
   end
 end

@@ -8,7 +8,7 @@
 # }
 module Netsuite
   class Contact
-    def self.create(args={})
+    def self.create(args = {})
       @client = Netsuite::Client.new(args)
       @client.create_contact
     end

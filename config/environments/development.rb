@@ -39,7 +39,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
   # Set localhost to be used by links generated in mailer templates.
-      config.hosts << "8626cde705c2.ngrok-free.app"
+  config.hosts << "8626cde705c2.ngrok-free.app"
 
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
