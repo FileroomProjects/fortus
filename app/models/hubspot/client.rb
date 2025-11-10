@@ -16,24 +16,24 @@ module Hubspot
       )
 
       if response["errors"] && response["errors"].any?
-        raise response["errors"].collect{|a| a["message"]}.join(',')
+        raise response["errors"].collect { |a| a["message"] }.join(",")
       end
-      return response.parsed_response["results"]&.first
+      response.parsed_response["results"]&.first
     end
 
     def fetch_company
       response = HTTParty.post(
         "https://api.hubapi.com/crm/v3/associations/deal/company/batch/read",
-        body: body.to_json, 
+        body: body.to_json,
         headers: {
           "Content-Type" => "application/json",
           "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
-        raise response["errors"].collect{|a| a["message"]}.join(',')
+        raise response["errors"].collect { |a| a["message"] }.join(",")
       end
-      return response["results"]
+      response["results"]
     end
 
     def fetch_contact_by_deal
@@ -46,9 +46,9 @@ module Hubspot
       )
 
       if response["errors"] && response["errors"].any?
-        raise response["errors"].collect{|a| a["message"]}.join(',')
+        raise response["errors"].collect { |a| a["message"] }.join(",")
       end
-      return response.parsed_response["results"]&.first
+      response.parsed_response["results"]&.first
     end
 
     def fetch_contact_by_id
@@ -60,9 +60,9 @@ module Hubspot
         }
       )
       if response["errors"] && response["errors"].any?
-        raise response["errors"].collect{|a| a["message"]}.join(',')
+        raise response["errors"].collect { |a| a["message"] }.join(",")
       end
-      return response.parsed_response["properties"]
+      response.parsed_response["properties"]
     end
 
     def update_contact
@@ -79,7 +79,7 @@ module Hubspot
       if response.code == 200
         return response.parsed_response
       end
-      raise response.parsed_response.collect{|a| a["message"]}.join(',')
+      raise response.parsed_response.collect { |a| a["message"] }.join(",")
     end
   end
 end

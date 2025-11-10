@@ -4,7 +4,7 @@ class HubspotsController < ApplicationController
   def create_opportunity
     @hubspot = Hubspot::Deal.new(params["hubspot"])
     @hubspot.sync_with_netsuite
-    render json: {success: true}
+    render json: { success: true }
   end
 
   def create_quote
