@@ -4,6 +4,6 @@ class HubspotsController < ApplicationController
   def callback
     @hubspot = Hubspot::Deal.new(params["hubspot"])
     @hubspot.sync_with_netsuite
-    render json: {success: true}
+    render json: { success: true }
   end
 end
