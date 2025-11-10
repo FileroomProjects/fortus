@@ -33,6 +33,12 @@ module Hubspot
       handle_contact_and_update_hubspot
     end
 
+    def sync_quotes_with_netsuite
+      @payload = prepare_payload_for_netsuite_quotes
+      Netsuite::Quote.create(@payload)
+      handle_contact_and_update_hubspot
+    end
+
     def fetch_prop_field(field_name)
       f_value = (properties[field_name.to_sym] || properties[field_name.to_s])[:versions]&.first
       f_value[:value] if f_value.present?
@@ -68,6 +74,24 @@ module Hubspot
         "total": fetch_prop_field(:hs_projected_amount).to_f,
         "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
       }
+    end
+
+    def prepare_payload_for_netsuite_quotes
+      byebug
+      {
+        "entity": { "id": netsuite_customer_id },
+        "tranDate": Date.today.to_s,
+        "memo": deal["properties"]["dealname"],
+        "item": line_items_list.map do |li|
+          {
+            "item": { "id": get_netsuite_item_id(li) },
+            "quantity": li["properties"]["quantity"].to_f,
+            "rate": li["properties"]["price"].to_f,
+            "amount": li["properties"]["amount"].to_f
+          }
+        end
+      }
+
     end
 
     def handle_contact_and_update_hubspot

@@ -16,5 +16,7 @@ Rails.application.routes.draw do
   root "home#index"
   resource :hubspot do 
     post :callback
+    post :create_opportunity
+    post :create_quote
   end
 end
