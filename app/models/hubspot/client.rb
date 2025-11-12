@@ -51,9 +51,38 @@ module Hubspot
       response.parsed_response["results"]&.first
     end
 
+    def fetch_company_by_deal
+      response = HTTParty.get(
+        "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/companies",
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response["errors"] && response["errors"].any?
+        raise response["errors"].collect { |a| a["message"] }.join(",")
+      end
+      response.parsed_response["results"]&.first
+    end
+
     def fetch_contact_by_id
       response = HTTParty.get(
         "https://api.hubapi.com/contacts/v1/contact/vid/#{body[:id]}/profile",
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+      if response["errors"] && response["errors"].any?
+        raise response["errors"].collect { |a| a["message"] }.join(",")
+      end
+      response.parsed_response["properties"]
+    end
+
+    def fetch_company_by_id
+      response = HTTParty.get(
+        "https://api.hubapi.com/companies/v2/companies/#{body[:id]}",
         headers: {
           "Content-Type" => "application/json",
           "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
