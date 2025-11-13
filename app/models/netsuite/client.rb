@@ -45,7 +45,26 @@ module Netsuite
       end
     end
 
-    def search
+    def search_contact_by_id
+      query_str = body.map { |k, v| "#{k} EQUAL \"#{v}\"" }.join(" AND ")
+
+      response = HTTParty.get(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/contact",
+        query: { q: query_str, limit: 1, offset: 0 },
+        headers: {
+          "Authorization" => "Bearer #{access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      if response.code == 200
+        response.parsed_response
+      else
+        raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+      end
+    end
+
+    def search_contact_by_properties
       query_str = body.map { |k, v| "#{k} IS \"#{v}\"" }.join(" AND ")
 
       response = HTTParty.get(
@@ -56,8 +75,28 @@ module Netsuite
           "Content-Type" => "application/json"
         }
       )
+
       if response.code == 200
-        response.parsed_response
+        JSON.parse(response.parsed_response)["items"].first
+      else
+        raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+      end
+    end
+
+    def search_customer_by_properties
+       query_str = body.map { |k, v| "#{k} IS \"#{v}\"" }.join(" AND ")
+
+      response = HTTParty.get(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/customer",
+        query: { q: query_str, limit: 1, offset: 0 },
+        headers: {
+          "Authorization" => "Bearer #{access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      if response.code == 200
+        JSON.parse(response.parsed_response)["items"].first
       else
         raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
       end
