@@ -29,5 +29,14 @@ module Hubspot
       end
       company
     end
+
+    def self.update(args = {})
+      @client = Hubspot::Client.new(body: args)
+
+      if company = @client.update_company
+        company = company.with_indifferent_access
+      end
+      company
+    end
   end
 end
