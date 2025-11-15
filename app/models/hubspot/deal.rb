@@ -46,8 +46,9 @@ module Hubspot
 
 
     def sync_contact_customer_with_netsuite
-      handle_contact_and_update_hubspot
       handle_company_and_update_hubspot
+
+      handle_contact_and_update_hubspot
     end
 
     def sync_quotes_and_opportunity_with_netsuite
@@ -64,7 +65,6 @@ module Hubspot
 
       if @netsuite_opportunity_id.present?
         @ns_quote_payload = prepare_payload_for_netsuite_quote
-        byebug
         ns_quote = Netsuite::Quote.create(@ns_quote_payload)
       end
     end

@@ -128,7 +128,7 @@ module Netsuite
           "Content-Type" => "application/json"
         }
       )
-      byebug
+
       if response.code == 204
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
