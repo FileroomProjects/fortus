@@ -4,9 +4,9 @@ module Hubspot
     include Hubspot::Deal::NetsuiteContactHelper
     include Hubspot::Deal::NetsuiteCompanyHelper
     include Hubspot::Deal::NetsuiteQuoteHelper
-    
-    def update(attributes={})
-      attributes = attributes.merge({deal_id: self.args[:objectId]})
+
+    def update(attributes = {})
+      attributes = attributes.merge({ deal_id: self.args[:objectId] })
       @client = Hubspot::Client.new(body: attributes)
 
       @client.update_deal
@@ -53,10 +53,13 @@ module Hubspot
 
     def sync_quotes_and_opportunity_with_netsuite
       if @netsuite_opportunity_id.blank?
+        Rails.logger.info "************** Creating Netsuite Opportunity"
         @opportunity_payload = prepare_payload_for_netsuite_opportunity
         ns_opportunity = Netsuite::Opportunity.create(@opportunity_payload)
         if ns_opportunity && ns_opportunity[:id].present?
+          Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
           @netsuite_opportunity_id = ns_opportunity[:id]
+          Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
           update({
             "netsuite_opportunity_id": ns_opportunity[:id]
           })
@@ -64,6 +67,7 @@ module Hubspot
       end
 
       if @netsuite_opportunity_id.present?
+        Rails.logger.info "************** Creating Netsuite Quote"
         @ns_quote_payload = prepare_payload_for_netsuite_quote
         ns_quote = Netsuite::Quote.create(@ns_quote_payload)
       end

@@ -3,7 +3,7 @@ module Hubspot::Deal::NetsuiteContactHelper
 
   included do
     def netsuite_contact_id
-      associated_contact_details[:netsuite_contact_id][:value] 
+      associated_contact_details[:netsuite_contact_id][:value]
     rescue
       raise "Netsuite Contact is blank"
     end
@@ -11,32 +11,36 @@ module Hubspot::Deal::NetsuiteContactHelper
     def handle_contact_and_update_hubspot
       hs_contact_details = associated_contact_details
       if hs_contact_details.present?
+        Rails.logger.info "************** Fetched Hubspot contact details"
         ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
 
         if ns_contact_id.present?
+          Rails.logger.info "************** Searching Netsuite Contact by id"
           ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
         end
-        
+
         if ns_contact.blank? && hs_contact_details[:email].present?
+          Rails.logger.info "************** Searching Netsuite Contact by email"
           ns_contact = Netsuite::Contact.find_by(email: hs_contact_details["email"]["value"])
         end
 
         if ns_contact.blank? && hs_contact_details[:email].present?
+          Rails.logger.info "************** Creating Netsuite Contact"
           ns_contact = create_contact(hs_contact_details)
         end
 
-        if ns_contact
-          Rails.logger.info "**************ns contact created #{ns_contact[:id]}"
+        if ns_contact.present?
+          Rails.logger.info "************** Updating Hubspot contact with netsuite_contact_id #{ns_contact&.fetch(:id, "")}"
           Hubspot::Contact.update({
             contactId: hs_contact_details[:hs_object_id][:value],
-            "netsuite_contact_id": (ns_contact&.fetch(:id, ''))
+            "netsuite_contact_id": (ns_contact&.fetch(:id, ""))
           })
         else
-          Rails.logger.info "askfhjk"
+          Rails.logger.info "************** Netsuite Contact ID & email are blank in Hubspot contact details"
         end
 
       else
-        Rails.logger.log("************ Contact detail is blank in hubspot")
+        Rails.logger.info "************ Contact details are blank in Hubspot"
       end
     end
 
@@ -50,6 +54,5 @@ module Hubspot::Deal::NetsuiteContactHelper
         "company": { "id": netsuite_company_id, "type": "customer" }
       )
     end
-
   end
 end

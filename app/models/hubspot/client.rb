@@ -112,7 +112,7 @@ module Hubspot
         }
       )
       if response.code == 200
-        return response.parsed_response
+        response.parsed_response
       else
         raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
@@ -130,7 +130,7 @@ module Hubspot
       )
 
       if response.code == 200
-        return response.parsed_response
+        response.parsed_response
       else
         raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
