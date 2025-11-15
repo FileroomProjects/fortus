@@ -21,6 +21,13 @@ module Hubspot
       response.parsed_response["results"]&.first
     end
 
+    def fetch_campaign_by_deal
+      response = HTTParty.get(
+        "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/campaign",
+        headers: { "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
+      )
+    end
+
     def fetch_company
       response = HTTParty.post(
         "https://api.hubapi.com/crm/v3/associations/deal/company/batch/read",
@@ -104,11 +111,29 @@ module Hubspot
           "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
+      if response.code == 200
+        return response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def update_deal
+      deal_id = body.delete(:deal_id)
+      response = HTTParty.patch(
+        "https://api.hubapi.com/crm/v3/objects/deals/#{deal_id}",
+        body: { 'properties': body }.to_json,
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
 
       if response.code == 200
         return response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
-      raise response.parsed_response.collect { |a| a["message"] }.join(",")
     end
   end
 end
