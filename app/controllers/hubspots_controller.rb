@@ -1,16 +1,15 @@
 class HubspotsController < ApplicationController
   protect_from_forgery with: :null_session
 
-  def create_opportunity
+  def create_contact_customer
     @hubspot = Hubspot::Deal.new(params["hubspot"])
-    @hubspot.sync_with_netsuite
+    @hubspot.sync_contact_customer_with_netsuite
     render json: { success: true }
   end
 
-  def create_quote
+  def create_quote_opportunity
     @hubspot = Hubspot::Deal.new(params["hubspot"])
-    byebug
-    @hubspot.sync_quotes_with_netsuite
-    render json: { success: true }
+    @hubspot.sync_quotes_and_opportunity_with_netsuite
+    render json: {success: true}
   end
 end

@@ -36,7 +36,6 @@ module Netsuite
         }
       )
 
-
       if response.code == 204
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
@@ -102,7 +101,7 @@ module Netsuite
     end
 
     def search_customer_by_properties
-      query_str = "SELECT id, entityid, email, companyname FROM customer WHERE LOWER(#{body[:columnName]}) = LOWER('#{body[:value]}')"
+      query_str = "SELECT * FROM customer WHERE LOWER(#{body[:columnName]}) = LOWER('#{body[:value]}')"
 
       response = HTTParty.post(
         "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit=1&offset=0",
@@ -113,11 +112,28 @@ module Netsuite
           "Prefer" => "transient"
         }
       )
-
       if response.code == 200
         JSON.parse(response.parsed_response)["items"].first
       else
         raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+      end
+    end
+
+    def create_quote
+      response = HTTParty.post(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/estimate",
+        body: body.to_json,
+        headers: {
+          "Authorization" => "Bearer #{access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+      byebug
+      if response.code == 204
+        ns_contact_id = response.headers[:location].split("/").last
+        { id: ns_contact_id }
+      else
+        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
       end
     end
   end
