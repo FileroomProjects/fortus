@@ -135,5 +135,22 @@ module Hubspot
         raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
     end
+
+    def update_company
+      company_id = body.delete(:companyId)
+      response = HTTParty.patch(
+        "https://api.hubapi.com/crm/v3/objects/companies/#{company_id}",
+        body: { 'properties': body }.to_json,
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 200
+        return response.parsed_response
+      end
+      raise response.parsed_response.collect { |a| a["message"] }.join(",")
+    end
   end
 end

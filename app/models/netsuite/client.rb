@@ -44,6 +44,24 @@ module Netsuite
       end
     end
 
+    def create_customer
+      response = HTTParty.post(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/customer",
+        body: body.to_json,
+        headers: {
+          "Authorization" => "Bearer #{access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      if response.code == 204
+        ns_contact_id = response.headers[:location].split("/").last
+        { id: ns_contact_id }
+      else
+        raise "Netsuite Client Customer error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+      end
+    end
+
     def search_contact_by_id
       query_str = body.map { |k, v| "#{k} EQUAL \"#{v}\"" }.join(" AND ")
 
@@ -57,7 +75,7 @@ module Netsuite
       )
 
       if response.code == 200
-        response.parsed_response
+        JSON.parse(response.parsed_response)["items"].first
       else
         raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
       end
@@ -83,14 +101,15 @@ module Netsuite
     end
 
     def search_customer_by_properties
-      query_str = body.map { |k, v| "#{k} IS \"#{v}\"" }.join(" AND ")
+      query_str = "SELECT * FROM customer WHERE LOWER(#{body[:columnName]}) = LOWER('#{body[:value]}')"
 
-      response = HTTParty.get(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/customer",
-        query: { q: query_str, limit: 1, offset: 0 },
+      response = HTTParty.post(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit=1&offset=0",
+        body: { q: query_str }.to_json,
         headers: {
           "Authorization" => "Bearer #{access_token}",
-          "Content-Type" => "application/json"
+          "Content-Type" => "application/json",
+          "Prefer" => "transient"
         }
       )
       if response.code == 200

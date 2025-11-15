@@ -44,6 +44,7 @@ module Hubspot
       @client.fetch_deal
     end
 
+
     def sync_contact_customer_with_netsuite
       handle_contact_and_update_hubspot
       handle_company_and_update_hubspot
@@ -72,6 +73,5 @@ module Hubspot
       f_value = (properties[field_name.to_sym] || properties[field_name.to_s])[:versions]&.first
       f_value[:value] if f_value.present?
     end
-
   end
 end
