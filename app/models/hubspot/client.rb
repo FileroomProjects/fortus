@@ -26,6 +26,11 @@ module Hubspot
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/campaign",
         headers: { "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
       )
+
+      if response["errors"] && response["errors"].any?
+        raise response["errors"].collect { |a| a["message"] }.join(",")
+      end
+      response.parsed_response["results"]&.first
     end
 
     def fetch_company
@@ -136,6 +141,23 @@ module Hubspot
       end
     end
 
+    def create_quote_deal
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/objects/deals",
+        body: body.to_json,
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
     def update_company
       company_id = body.delete(:companyId)
       response = HTTParty.patch(
@@ -151,6 +173,40 @@ module Hubspot
         return response.parsed_response
       end
       raise response.parsed_response.collect { |a| a["message"] }.join(",")
+    end
+
+    def create_association(from_object_type, to_object_type)
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create",
+        body: body.to_json,
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def create_line_item
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/objects/line_items",
+        body: body.to_json,
+        headers: {
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
     end
   end
 end

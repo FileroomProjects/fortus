@@ -4,6 +4,7 @@ module Hubspot
     include Hubspot::Deal::NetsuiteContactHelper
     include Hubspot::Deal::NetsuiteCompanyHelper
     include Hubspot::Deal::NetsuiteQuoteHelper
+    include Hubspot::Deal::NetsuiteQuoteDealHelper
 
     def update(attributes = {})
       attributes = attributes.merge({ deal_id: self.args[:objectId] })
@@ -44,7 +45,6 @@ module Hubspot
       @client.fetch_deal
     end
 
-
     def sync_contact_customer_with_netsuite
       handle_company_and_update_hubspot
 
@@ -67,10 +67,29 @@ module Hubspot
       end
 
       if @netsuite_opportunity_id.present?
+        Rails.logger.info "************** Netsuite Opportunity already exists with ID #{@netsuite_opportunity_id}"
         Rails.logger.info "************** Creating Netsuite Quote"
         @ns_quote_payload = prepare_payload_for_netsuite_quote
         ns_quote = Netsuite::Quote.create(@ns_quote_payload)
+        if ns_quote && ns_quote[:id].present?
+          Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
+          @netsuite_quote_deal_payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
+          hs_quote_deal = Hubspot::QuoteDeal.create(@netsuite_quote_deal_payload)
+          if hs_quote_deal.present? && hs_quote_deal[:id].present?
+            Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
+            association_for_deal(hs_quote_deal[:id])
+          end
+        end
       end
+    end
+
+    def association_for_deal(hs_quote_deal_id)
+      Rails.logger.info "************** Associating Quote Deal with Company, Contact, Parent Deal and Line Item"
+      hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, args[:objectId])
+      hs_quote_deal.associate_company
+      hs_quote_deal.associate_contact
+      hs_quote_deal.associate_parent_deal
+      hs_quote_deal.associate_line_item
     end
 
     def fetch_prop_field(field_name)

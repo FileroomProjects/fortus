@@ -22,7 +22,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
         "probability": fetch_prop_field(:hs_deal_stage_probability).to_f,
         "entity": { "id": netsuite_company_id, "type": "customer" },
         "contact": { "id": netsuite_contact_id, "type": "contact" },
-        "currency": { "id": "1", "type": "currency", "refName": fetch_prop_field(:deal_currency_code) },
+        "currency": { "id": "2", "type": "currency", "refName": fetch_prop_field(:deal_currency_code) },
         "exchangeRate": 1.0,
         "isBudgetApproved": false,
         "canHaveStackable": false,
@@ -38,6 +38,5 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
         "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
       }
     end
-
   end
 end

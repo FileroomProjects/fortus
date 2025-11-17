@@ -17,6 +17,10 @@ module Hubspot::Deal::NetsuiteContactHelper
         if ns_contact_id.present?
           Rails.logger.info "************** Searching Netsuite Contact by id"
           ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
+          if ns_contact.present?
+            Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
+            return
+          end
         end
 
         if ns_contact.blank? && hs_contact_details[:email].present?
@@ -51,6 +55,7 @@ module Hubspot::Deal::NetsuiteContactHelper
         "email": contact_details[:email]&.fetch("value", ""),
         "jobTitle": contact_details[:jobtitle]&.fetch("value", ""),
         "isInactive": false,
+        "mobilePhone": contact_details[:phone]&.fetch("value", "") || "4843211147",
         "company": { "id": netsuite_company_id, "type": "customer" }
       )
     end
