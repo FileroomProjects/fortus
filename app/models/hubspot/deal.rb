@@ -4,7 +4,7 @@ module Hubspot
     include Hubspot::Deal::NetsuiteContactHelper
     include Hubspot::Deal::NetsuiteCompanyHelper
     include Hubspot::Deal::NetsuiteQuoteHelper
-    include Hubspot::Deal::NetsuiteQuoteDealHelper
+    include Hubspot::Deal::HubspotQuoteDealHelper
 
     def update(attributes = {})
       attributes = attributes.merge({ deal_id: self.args[:objectId] })

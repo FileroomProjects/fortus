@@ -1,6 +1,6 @@
 module Hubspot
   class QuoteDeal < Hubspot::Base
-    include Hubspot::Deal::NetsuiteQuoteDealHelper
+    include Hubspot::Deal::HubspotQuoteDealHelper
     attr_accessor :hs_deal_id, :hs_parent_deal_id
 
     def initialize(hs_deal_id, hs_parent_deal_id)
