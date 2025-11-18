@@ -26,14 +26,14 @@ module Hubspot
     end
 
     def associated_contact_details
-      contact_id = Hubspot::Contact.find_by_deal_id(args[:objectId])[:toObjectId]
+      contact_id = Hubspot::Contact.find_by_deal_id(args[:objectId])&.[](:toObjectId)
       raise "Contact is not present" if contact_id.blank?
 
       Hubspot::Contact.find_by_id(contact_id)
     end
 
     def associated_company_details
-      company_id = Hubspot::Company.find_by_deal_id(args[:objectId])[:toObjectId]
+      company_id = Hubspot::Company.find_by_deal_id(args[:objectId])&.[](:toObjectId)
       raise "Company is not present" if company_id.blank?
 
       Hubspot::Company.find_by_id(company_id)
@@ -53,32 +53,46 @@ module Hubspot
 
     def sync_quotes_and_opportunity_with_netsuite
       if @netsuite_opportunity_id.blank?
-        Rails.logger.info "************** Creating Netsuite Opportunity"
-        @opportunity_payload = prepare_payload_for_netsuite_opportunity
-        ns_opportunity = Netsuite::Opportunity.create(@opportunity_payload)
-        if ns_opportunity && ns_opportunity[:id].present?
-          Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
-          @netsuite_opportunity_id = ns_opportunity[:id]
-          Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
-          update({
-            "netsuite_opportunity_id": ns_opportunity[:id]
-          })
+        create_netsuite_opportunity_and_update_hubspot_deal
+      else
+        @netsuite_opportunity = Netsuite::Opportunity.show(@netsuite_opportunity_id)
+        if @netsuite_opportunity.present? && @netsuite_opportunity[:entityStatus]&.[](:refName) == "Open"
+          Rails.logger.info "************** Netsuite Opportunity already exists with ID #{@netsuite_opportunity_id}"
+        else
+          create_netsuite_opportunity_and_update_hubspot_deal
         end
       end
 
       if @netsuite_opportunity_id.present?
-        Rails.logger.info "************** Netsuite Opportunity already exists with ID #{@netsuite_opportunity_id}"
-        Rails.logger.info "************** Creating Netsuite Quote"
-        @ns_quote_payload = prepare_payload_for_netsuite_quote
-        ns_quote = Netsuite::Quote.create(@ns_quote_payload)
-        if ns_quote && ns_quote[:id].present?
-          Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
-          @netsuite_quote_deal_payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
-          hs_quote_deal = Hubspot::QuoteDeal.create(@netsuite_quote_deal_payload)
-          if hs_quote_deal.present? && hs_quote_deal[:id].present?
-            Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
-            association_for_deal(hs_quote_deal[:id])
-          end
+        create_netsuite_quote_estimate_and_create_hubspot_quote_deal
+      end
+    end
+
+    def create_netsuite_opportunity_and_update_hubspot_deal
+      Rails.logger.info "************** Creating Netsuite Opportunity"
+      @opportunity_payload = prepare_payload_for_netsuite_opportunity
+      ns_opportunity = Netsuite::Opportunity.create(@opportunity_payload)
+      if ns_opportunity && ns_opportunity[:id].present?
+        Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
+        @netsuite_opportunity_id = ns_opportunity[:id]
+        Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
+        update({
+          "netsuite_opportunity_id": ns_opportunity[:id]
+        })
+      end
+    end
+
+    def create_netsuite_quote_estimate_and_create_hubspot_quote_deal
+      Rails.logger.info "************** Creating Netsuite Quote"
+      @ns_quote_payload = prepare_payload_for_netsuite_quote
+      ns_quote = Netsuite::Quote.create(@ns_quote_payload)
+      if ns_quote && ns_quote[:id].present?
+        Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
+        @netsuite_quote_deal_payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
+        hs_quote_deal = Hubspot::QuoteDeal.create(@netsuite_quote_deal_payload)
+        if hs_quote_deal.present? && hs_quote_deal[:id].present?
+          Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
+          association_for_deal(hs_quote_deal[:id])
         end
       end
     end
