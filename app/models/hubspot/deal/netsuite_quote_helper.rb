@@ -3,14 +3,17 @@ module Hubspot::Deal::NetsuiteQuoteHelper
 
   included do
     def prepare_payload_for_netsuite_quote
+      hs_contact_details = associated_contact_details
       {
-        "entity": { "id": "141139" },
-        "custbody_so_title": "Road Repair Estimate",
+        "entity": { "id": @netsuite_opportunity[:entity]&.[](:id) },
+        "custbody_so_title": fetch_prop_field(:dealname),
         "location": { "id": "80" },
-        "custbody34": "2024-11-05T08:30:00Z",
-        "custbody20": { refName: "E-mail" },
-        "custbody37": { "id": "6" },
-        "custbody_phone_number": "4843211147",
+        "custbody34": Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "custbody20": { refName: "Opportunity " }, # Origin
+        "opportunity": { "id": @netsuite_opportunity_id }, # Delivery Contact Number
+        "custbody37": { "id": "6" }, # Case Type
+        "custbody1": { "id": hs_contact_details[:netsuite_contact_id]&.fetch("value", "") }, # contact
+        "custbody_phone_number": hs_contact_details[:phone]&.fetch("value", "") || "4843211147",
         "item": {
           "items": [
             {

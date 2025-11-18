@@ -17,6 +17,10 @@ module Hubspot::Deal::NetsuiteCompanyHelper
         if ns_company_id.present?
           Rails.logger.info "************** Searching Netsuite Customer by id"
           ns_customer = Netsuite::Customer.find_by(columnName: "id", value: ns_company_id)
+          if ns_customer.present?
+            Rails.logger.info "************** Found Netsuite Customer by id #{ns_company_id}"
+            return
+          end
         end
 
         if ns_customer.blank? && hs_company_details[:name].present?
