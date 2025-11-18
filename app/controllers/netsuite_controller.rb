@@ -1,4 +1,5 @@
 class NetsuiteController < ApplicationController
+  protect_from_forgery with: :null_session
   # GET /netsuite/callback
   def callback
     code = params[:code]
@@ -37,5 +38,11 @@ class NetsuiteController < ApplicationController
         format.json { render json: { error: "Authentication failed", message: e.message }, status: :internal_server_error }
       end
     end
+  end
+
+  def sync_order
+    @netsuite = Netsuite::SalesOrder.new(params["netsuite"])
+    @netsuite.sync_sales_order_with_hubspot
+    render json: { success: true }
   end
 end

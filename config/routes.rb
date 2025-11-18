@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   # NetSuite OAuth2 callback route
   get "netsuite/callback", to: "netsuite#callback"
-
+  post "netsuite/sync_order", to: "netsuite#sync_order"
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -14,6 +14,9 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "home#index"
+  resource :netsuite do
+    post :sync_order
+  end
   resource :hubspot, only: [] do
     post :callback
     post :create_contact_customer

@@ -10,8 +10,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/deals/v1/deal/#{body[:deal_id]}",
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -24,7 +24,7 @@ module Hubspot
     def fetch_campaign_by_deal
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/campaign",
-        headers: { "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
+        headers: { "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
       )
     end
 
@@ -33,8 +33,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/associations/deal/company/batch/read",
         body: body.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -47,8 +47,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/contacts",
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -62,8 +62,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/companies",
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -77,8 +77,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/contacts/v1/contact/vid/#{body[:id]}/profile",
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -91,8 +91,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/companies/v2/companies/#{body[:id]}",
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -107,8 +107,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/contacts/#{contact_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response.code == 200
@@ -124,8 +124,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/deals/#{deal_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -142,8 +142,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/companies/#{company_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type" : "application/json",
+          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 

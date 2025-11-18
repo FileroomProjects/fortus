@@ -1,7 +1,14 @@
 module Netsuite
   class Base
+    require "ostruct"
+    
     include HTTParty
 
+    attr_accessor :args, :properties
+
+    def initialize(params)
+      @args = params.as_json.with_indifferent_access
+    end
 
     # Exchange authorization code for access token and store it
     def self.exchange_code_for_token(code)
