@@ -136,5 +136,21 @@ module Netsuite
         raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
       end
     end
+
+    def fetch_opportunity(ns_opportunity_id)
+      response = HTTParty.get(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/opportunity/#{ns_opportunity_id}",
+        headers: {
+          "Authorization" => "Bearer #{access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      if response.code == 200
+        JSON.parse(response.parsed_response)
+      else
+        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+      end
+    end
   end
 end
