@@ -1,7 +1,7 @@
 module Netsuite
   class Base
     require "ostruct"
-    
+
     include HTTParty
 
     attr_accessor :args, :properties
