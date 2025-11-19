@@ -28,5 +28,14 @@ module Hubspot
       end
       contact
     end
+
+    def self.search(args = {})
+      @client = Hubspot::Client.new(body: args)
+
+      if contact = @client.search_object("contacts")
+        contact = contact.with_indifferent_access
+      end
+      contact
+    end
   end
 end

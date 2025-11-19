@@ -13,6 +13,15 @@ module Hubspot
       @client.update_deal
     end
 
+    def self.search(args = {})
+      @client = Hubspot::Client.new(body: args)
+
+      if deal = @client.search_object("deals")
+        deal = deal.with_indifferent_access
+      end
+      deal
+    end
+
     def associated_company
       Hubspot::Company.fetch_by_deal_id(args[:objectId])
     end
@@ -109,6 +118,14 @@ module Hubspot
     def fetch_prop_field(field_name)
       f_value = (properties[field_name.to_sym] || properties[field_name.to_s])[:versions]&.first
       f_value[:value] if f_value.present?
+    end
+
+    def fetch_prop_field(field_name)
+      prop = properties[field_name.to_sym] || properties[field_name.to_s]
+      return nil if prop.nil?
+
+      version = prop[:versions]&.first || prop["versions"]&.first
+      version[:value] || version["value"]
     end
   end
 end
