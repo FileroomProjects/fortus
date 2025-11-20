@@ -17,22 +17,6 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       }
     end
 
-    def prepare_payload_for_deal_to_contact_association(hs_deal_id, hs_contact_id)
-      prepare_association_payload(hs_deal_id, hs_contact_id, "deal_to_contact")
-    end
-
-    def prepare_payload_for_deal_to_company_association(hs_deal_id, hs_company_id)
-      prepare_association_payload(hs_deal_id, hs_company_id, "deal_to_company")
-    end
-
-    def prepare_payload_for_deal_to_deal_association(child_deal_id, parent_deal_id)
-      prepare_association_payload(child_deal_id, parent_deal_id, "deal_to_deal")
-    end
-
-    def prepare_payload_for_line_item_to_deal_association(line_item_id, deal_id)
-      prepare_association_payload(line_item_id, deal_id, "line_item_to_deal")
-    end
-
     def line_item_payload
       {
         "properties": {
@@ -42,18 +26,5 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         }
       }
     end
-
-    private
-      def prepare_association_payload(from_id, to_id, type)
-        {
-          "inputs" => [
-            {
-              "from" => { "id" => from_id },
-              "to" => { "id" => to_id },
-              "type" => type
-            }
-          ]
-        }
-      end
   end
 end
