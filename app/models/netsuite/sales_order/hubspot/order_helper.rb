@@ -6,11 +6,33 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
   ORDER_TO_COMPANY = 509
 
   included do
+    def update_hubspot_order(hs_order)
+      payload = prepare_payload_for_hubspot_order_update(hs_order)
+      hs_order = ::Hubspot::Order.update(payload)
+      hs_order
+    end
+
+    def create_hubspot_order
+      payload = prepare_payload_for_hubspot_order
+      hs_order = ::Hubspot::Order.create(payload)
+      hs_order
+    end
+
     def prepare_payload_for_hubspot_order
       {
         "properties": build_properties,
         "associations": build_associations
       }
+    end
+
+    def prepare_payload_for_hubspot_order_update(hs_order)
+      {
+        "properties": build_properties.merge(order_id: hs_order[:id])
+      }
+    end
+
+    def find_hubspot_order
+      Hubspot::Order.search(payload_for_search_hubspot_order)
     end
 
     private
@@ -41,6 +63,22 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
             {
               associationCategory: "HUBSPOT_DEFINED",
               associationTypeId: type_id
+            }
+          ]
+        }
+      end
+
+      def payload_for_search_hubspot_order
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "netsuite_order_number",
+                  operator: "EQ",
+                  value: args[:sales_order][:id]
+                }
+              ]
             }
           ]
         }

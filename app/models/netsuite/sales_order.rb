@@ -7,23 +7,28 @@ module Netsuite
     include Netsuite::SalesOrder::Hubspot::ProductHelper
 
     def sync_sales_order_with_hubspot
-      fetch_associated_hubspot_records
-      @payload = prepare_payload_for_hubspot_order
-      hs_order = ::Hubspot::Order.create(@payload)
+      find_associated_hubspot_records
+      hs_order = find_hubspot_order
       if hs_order.present? && hs_order[:id].present?
-        Rails.logger.info "************** Created Hubspot Order with ID #{hs_order[:id]}"
-        create_product_and_line_items_in_hubspot_order(hs_order)
-        update_parent_and_child_deal
+        hs_order = update_hubspot_order(hs_order)
+        Rails.logger.info "************** Updated Hubspot Order with ID #{hs_order[:id]}" if hs_order[:id].present?
       else
-        raise "Failed to create Hubspot Order"
+        hs_order = create_hubspot_order
+        if hs_order.present? && hs_order[:id].present?
+          Rails.logger.info "************** Created Hubspot Order with ID #{hs_order[:id]}"
+          create_and_update_product_and_line_items_in_hubspot_order(hs_order)
+        else
+          raise "Failed to create Hubspot Order"
+        end
       end
+      update_parent_and_child_deal
     end
 
-    def fetch_associated_hubspot_records
-      @hs_contact = fetch_hubspot_contact
-      @hs_company = fetch_hubspot_company
-      @hs_parent_deal = fetch_deal("NEQ", "parent")
-      @hs_child_deal = fetch_deal("EQ", "child")
+    def find_associated_hubspot_records
+      @hs_contact = find_hubspot_contact
+      @hs_company = find_hubspot_company
+      @hs_parent_deal = find_deal("NEQ", "parent")
+      @hs_child_deal = find_deal("EQ", "child")
     end
   end
 end

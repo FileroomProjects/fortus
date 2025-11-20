@@ -2,7 +2,7 @@ module Netsuite::SalesOrder::Hubspot::ProductHelper
   extend ActiveSupport::Concern
 
   included do
-    def create_product_and_line_items_in_hubspot_order(hs_order)
+    def create_and_update_product_and_line_items_in_hubspot_order(hs_order)
       args[:items].each do |item|
         create_and_associate_line_item(item, hs_order)
         # hs_product = Hubspot::Product.search(payload_for_search_hubspot_product(item))

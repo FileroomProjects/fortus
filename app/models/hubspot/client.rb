@@ -259,5 +259,23 @@ module Hubspot
         raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
     end
+
+    def update_order
+      order_id = body[:properties].delete(:order_id)
+      response = HTTParty.patch(
+        "https://api.hubapi.com/crm/v3/objects/orders/#{order_id}",
+        body: body.to_json,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 200
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
   end
 end

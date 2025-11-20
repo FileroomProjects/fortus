@@ -2,7 +2,7 @@ module Netsuite::SalesOrder::Hubspot::CompanyHelper
   extend ActiveSupport::Concern
 
   included do
-    def fetch_hubspot_company
+    def find_hubspot_company
       hs_company = Hubspot::Company.search(payload_for_search_hubspot_company)
       if hs_company.present? && hs_company[:id].present?
         Rails.logger.info "************** Hubspot Company found with ID #{hs_company[:id]}"

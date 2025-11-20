@@ -2,7 +2,7 @@ module Netsuite::SalesOrder::Hubspot::DealHelper
   extend ActiveSupport::Concern
 
   included do
-    def fetch_deal(operator, log_label)
+    def find_deal(operator, log_label)
       payload = build_search_payload(operator)
       hs_deal = Hubspot::Deal.search(payload)
       if hs_deal.present? && hs_deal[:id].present?
