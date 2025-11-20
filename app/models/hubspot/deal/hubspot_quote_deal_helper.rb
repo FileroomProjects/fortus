@@ -11,8 +11,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
           "netsuite_quote_id": ns_quote_id,
           "amount": fetch_prop_field(:amount),
           "netsuite_location": "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/estimate/#{ns_quote_id}",
-          "netsuite_origin": "netsuite",
-          "netsuite_opportunity_id": @netsuite_opportunity_id
+          "netsuite_origin": "netsuite"
         }
       }
     end
