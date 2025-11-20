@@ -12,20 +12,21 @@ module Netsuite::SalesOrder::Hubspot::ContactHelper
       end
     end
 
-    def payload_for_search_hubspot_contact
-      {
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: "netsuite_contact_id",
-                operator: "EQ",
-                value: args[:sales_order][:contact_id]
-              }
-            ]
-          }
-        ]
-      }
-    end
+    private
+      def payload_for_search_hubspot_contact
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "netsuite_contact_id",
+                  operator: "EQ",
+                  value: args[:sales_order][:contact_id]
+                }
+              ]
+            }
+          ]
+        }
+      end
   end
 end

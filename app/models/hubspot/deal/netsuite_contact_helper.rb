@@ -12,52 +12,67 @@ module Hubspot::Deal::NetsuiteContactHelper
       hs_contact_details = associated_contact_details
       if hs_contact_details.present?
         Rails.logger.info "************** Fetched Hubspot contact details"
-        ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
+        ns_contact = find_or_create_netsuite_contact(hs_contact_details)
 
-        if ns_contact_id.present?
-          Rails.logger.info "************** Searching Netsuite Contact by id"
-          ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
-          if ns_contact.present?
-            Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
-            return
-          end
-        end
+        return if ns_contact == "found by netsuite_contact_id" # No need to update hubspot contact
 
-        if ns_contact.blank? && hs_contact_details[:email].present?
-          Rails.logger.info "************** Searching Netsuite Contact by email"
-          ns_contact = Netsuite::Contact.find_by(email: hs_contact_details["email"]["value"])
-        end
-
-        if ns_contact.blank? && hs_contact_details[:email].present?
-          Rails.logger.info "************** Creating Netsuite Contact"
-          ns_contact = create_contact(hs_contact_details)
-        end
-
-        if ns_contact.present?
-          Rails.logger.info "************** Updating Hubspot contact with netsuite_contact_id #{ns_contact&.fetch(:id, "")}"
+        if ns_contact.present? && ns_contact[:id].present?
+          Rails.logger.info "************** Updating Hubspot contact with netsuite_contact_id #{ns_contact[:id]}"
           Hubspot::Contact.update({
             contactId: hs_contact_details[:hs_object_id][:value],
-            "netsuite_contact_id": (ns_contact&.fetch(:id, ""))
+            "netsuite_contact_id": (ns_contact[:id])
           })
         else
-          Rails.logger.info "************** Netsuite Contact ID & email are blank in Hubspot contact details"
+          raise "Netsuite Contact ID & email are blank in Hubspot contact details"
         end
 
       else
         Rails.logger.info "************ Contact details are blank in Hubspot"
+        raise "Hubspot Contact details are blank"
       end
+    end
+
+    def find_or_create_netsuite_contact(hs_contact_details)
+      ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
+      email = hs_contact_details[:email]&.fetch("value", "")
+      ns_contact = nil
+
+      if ns_contact_id.present?
+        Rails.logger.info "************** Searching Netsuite Contact by id"
+        ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
+        if ns_contact.present?
+          Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
+          return "found by netsuite_contact_id"
+        end
+      end
+
+      if email.present?
+        Rails.logger.info "************** Searching Netsuite Contact by email"
+        ns_contact = Netsuite::Contact.find_by(email: email)
+      end
+
+      if ns_contact.blank? && email.present?
+        Rails.logger.info "************** Creating Netsuite Contact"
+        ns_contact = create_contact(hs_contact_details)
+      end
+
+      ns_contact
     end
 
     def create_contact(contact_details)
       Netsuite::Contact.create(
-        "firstName": contact_details[:firstname]&.fetch("value", ""),
+        "firstName": hs_value(contact_details, :firstname),
         "lastName": "Doe",
-        "email": contact_details[:email]&.fetch("value", ""),
-        "jobTitle": contact_details[:jobtitle]&.fetch("value", ""),
+        "email": hs_value(contact_details, :email),
+        "jobTitle":  hs_value(contact_details, :jobtitle),
         "isInactive": false,
-        "mobilePhone": contact_details[:phone]&.fetch("value", "") || "4843211147",
+        "mobilePhone": hs_value(contact_details, :phone).presence || "4843211147",
         "company": { "id": netsuite_company_id, "type": "customer" }
       )
+    end
+
+    def hs_value(hs_hash, key)
+      hs_hash[key]&.fetch("value", "") || ""
     end
   end
 end

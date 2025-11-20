@@ -18,7 +18,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
         "memo": "Test opportunity created via API new",
         "tranDate": Time.at(fetch_prop_field(:createdate).to_i / 1000).utc.strftime("%Y-%m-%d"),
         "expectedCloseDate": Time.at(fetch_prop_field(:closedate).to_i / 1000).utc.strftime("%Y-%m-%d"),
-        "status": get_stage_from_quotes_pl(fetch_prop_field(:dealstage)),
+        "status": "Open",
         "probability": fetch_prop_field(:hs_deal_stage_probability).to_f,
         "entity": { "id": netsuite_company_id, "type": "customer" },
         "contact": { "id": netsuite_contact_id, "type": "contact" },

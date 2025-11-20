@@ -12,20 +12,21 @@ module Netsuite::SalesOrder::Hubspot::CompanyHelper
       end
     end
 
-    def payload_for_search_hubspot_company
-      {
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: "netsuite_company_id",
-                operator: "EQ",
-                value: args[:customer][:id]
-              }
-            ]
-          }
-        ]
-      }
-    end
+    private
+      def payload_for_search_hubspot_company
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "netsuite_company_id",
+                  operator: "EQ",
+                  value: args[:customer][:id]
+                }
+              ]
+            }
+          ]
+        }
+      end
   end
 end

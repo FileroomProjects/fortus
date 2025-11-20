@@ -22,23 +22,8 @@ module Netsuite
     def fetch_associated_hubspot_records
       @hs_contact = fetch_hubspot_contact
       @hs_company = fetch_hubspot_company
-      @hs_parent_deal = fetch_hubspot_parent_deal
-      @hs_child_deal = fetch_hubspot_child_deal
-    end
-
-    def update_parent_and_child_deal
-      updated_parent_deal = update_hubspot_parent_deal
-      if updated_parent_deal.present? && updated_parent_deal[:id].present?
-        Rails.logger.info "************** Updated Hubspot Parent Deal with ID #{updated_parent_deal[:id]}"
-      else
-        raise "Failed to update Hubspot Parent Deal"
-      end
-      updated_child_deal = update_hubspot_child_deal
-      if updated_child_deal.present? && updated_child_deal[:id].present?
-        Rails.logger.info "************** Updated Hubspot Child Deal with ID #{updated_child_deal[:id]}"
-      else
-        raise "Failed to update Hubspot Child Deal"
-      end
+      @hs_parent_deal = fetch_deal("NEQ", "parent")
+      @hs_child_deal = fetch_deal("EQ", "child")
     end
   end
 end

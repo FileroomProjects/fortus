@@ -6,8 +6,8 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       {
         "properties": {
           "dealname": fetch_prop_field(:dealname),
-          "pipeline": "1223722438",
-          "dealstage": "1979552198",
+          "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"], # Netsuite Quotes pipeline
+          "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"], # Open stage
           "netsuite_quote_id": ns_quote_id,
           "amount": fetch_prop_field(:amount),
           "netsuite_location": "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/estimate/#{ns_quote_id}",
@@ -18,51 +18,19 @@ module Hubspot::Deal::HubspotQuoteDealHelper
     end
 
     def prepare_payload_for_deal_to_contact_association(hs_deal_id, hs_contact_id)
-      {
-        "inputs": [
-          {
-            "from": {  "id": hs_deal_id },
-            "to": { "id": hs_contact_id },
-            "type": "deal_to_contact"
-          }
-        ]
-      }
+      prepare_association_payload(hs_deal_id, hs_contact_id, "deal_to_contact")
     end
 
     def prepare_payload_for_deal_to_company_association(hs_deal_id, hs_company_id)
-      {
-        "inputs": [
-          {
-            "from": { "id": hs_deal_id },
-            "to": { "id": hs_company_id },
-            "type": "deal_to_company"
-          }
-        ]
-      }
+      prepare_association_payload(hs_deal_id, hs_company_id, "deal_to_company")
     end
 
     def prepare_payload_for_deal_to_deal_association(child_deal_id, parent_deal_id)
-      {
-        "inputs": [
-          {
-            "from": { "id": child_deal_id },
-            "to": { "id": parent_deal_id },
-            "type": "deal_to_deal"
-          }
-        ]
-      }
+      prepare_association_payload(child_deal_id, parent_deal_id, "deal_to_deal")
     end
 
     def prepare_payload_for_line_item_to_deal_association(line_item_id, deal_id)
-      {
-        "inputs": [
-          {
-            "from": { "id": line_item_id },
-            "to": { "id": deal_id },
-            "type": "line_item_to_deal"
-          }
-        ]
-      }
+      prepare_association_payload(line_item_id, deal_id, "line_item_to_deal")
     end
 
     def line_item_payload
@@ -74,5 +42,18 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         }
       }
     end
+
+    private
+      def prepare_association_payload(from_id, to_id, type)
+        {
+          "inputs" => [
+            {
+              "from" => { "id" => from_id },
+              "to" => { "id" => to_id },
+              "type" => type
+            }
+          ]
+        }
+      end
   end
 end
