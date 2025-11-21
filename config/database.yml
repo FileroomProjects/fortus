@@ -9,8 +9,8 @@ default: &default
 development:
   <<: *default
   database: fortus_dev
+
 production:
   <<: *default
-  database: fortus-netsuite-hubspot_production
-  username: fortus-netsuite-hubspot
-  password: <%= ENV["MYAPP_DATABASE_PASSWORD"] %>
+  url: <%= ENV['DATABASE_URL'] %>
+
