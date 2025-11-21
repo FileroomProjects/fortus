@@ -10,8 +10,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/deals/v1/deal/#{body[:deal_id]}",
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -24,7 +24,7 @@ module Hubspot
     def fetch_campaign_by_deal
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/campaign",
-        headers: { "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
+        headers: { "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
       )
 
       if response["errors"] && response["errors"].any?
@@ -38,8 +38,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/associations/deal/company/batch/read",
         body: body.to_json,
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -52,8 +52,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/contacts",
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -67,8 +67,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/companies",
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -82,8 +82,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/contacts/v1/contact/vid/#{body[:id]}/profile",
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -96,8 +96,8 @@ module Hubspot
       response = HTTParty.get(
         "https://api.hubapi.com/companies/v2/companies/#{body[:id]}",
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response["errors"] && response["errors"].any?
@@ -112,8 +112,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/contacts/#{contact_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
       if response.code == 200
@@ -129,8 +129,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/deals/#{deal_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -146,8 +146,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/deals",
         body: body.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -164,8 +164,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/companies/#{company_id}",
         body: { 'properties': body }.to_json,
         headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -180,8 +180,8 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create",
         body: body.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
@@ -197,12 +197,81 @@ module Hubspot
         "https://api.hubapi.com/crm/v3/objects/line_items",
         body: body.to_json,
         headers: {
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
       )
 
       if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def create_order
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/objects/orders",
+        body: body.to_json,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def create_product
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/objects/products",
+        body: body.to_json,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 201
+        response.parsed_response
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def search_object(object_type)
+      response = HTTParty.post(
+        "https://api.hubapi.com/crm/v3/objects/#{object_type}/search",
+        body: body.to_json,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 200
+        response.parsed_response["results"]&.first
+      else
+        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+      end
+    end
+
+    def update_order
+      order_id = body[:properties].delete(:order_id)
+      response = HTTParty.patch(
+        "https://api.hubapi.com/crm/v3/objects/orders/#{order_id}",
+        body: body.to_json,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
+        }
+      )
+
+      if response.code == 200
         response.parsed_response
       else
         raise response.parsed_response.collect { |a| a["message"] }.join(",")

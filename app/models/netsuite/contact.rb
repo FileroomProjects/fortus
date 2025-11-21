@@ -10,17 +10,29 @@ module Netsuite
   class Contact
     def self.create(args = {})
       @client = Netsuite::Client.new(args)
-      @client.create_contact.with_indifferent_access
+      contact = @client.create_contact
+      if contact.present?
+        contact = contact.with_indifferent_access
+      end
+      contact
     end
 
     def self.find_by_id(args = {})
       @client = Netsuite::Client.new(args)
-      @client.search_contact_by_id.with_indifferent_access
+      contact = @client.search_contact_by_id
+      if contact.present?
+        contact = contact.with_indifferent_access
+      end
+      contact
     end
 
     def self.find_by(args = {})
       @client = Netsuite::Client.new(args)
-      @client.search_contact_by_properties.with_indifferent_access
+      contact = @client.search_contact_by_properties
+      if contact.present?
+        contact = contact.with_indifferent_access
+      end
+      contact
     end
   end
 end

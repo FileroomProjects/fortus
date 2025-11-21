@@ -13,6 +13,15 @@ module Hubspot
       @client.update_deal
     end
 
+    def self.search(args = {})
+      @client = Hubspot::Client.new(body: args)
+
+      if deal = @client.search_object("deals")
+        deal = deal.with_indifferent_access
+      end
+      deal
+    end
+
     def associated_company
       Hubspot::Company.fetch_by_deal_id(args[:objectId])
     end
@@ -70,8 +79,8 @@ module Hubspot
 
     def create_netsuite_opportunity_and_update_hubspot_deal
       Rails.logger.info "************** Creating Netsuite Opportunity"
-      @opportunity_payload = prepare_payload_for_netsuite_opportunity
-      ns_opportunity = Netsuite::Opportunity.create(@opportunity_payload)
+      opportunity_payload = prepare_payload_for_netsuite_opportunity
+      ns_opportunity = Netsuite::Opportunity.create(opportunity_payload)
       if ns_opportunity && ns_opportunity[:id].present?
         Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
         @netsuite_opportunity_id = ns_opportunity[:id]
@@ -79,36 +88,27 @@ module Hubspot
         update({
           "netsuite_opportunity_id": ns_opportunity[:id]
         })
+      else
+        raise "Failed to create netsuite opportunity"
       end
     end
 
     def create_netsuite_quote_estimate_and_create_hubspot_quote_deal
       Rails.logger.info "************** Creating Netsuite Quote"
-      @ns_quote_payload = prepare_payload_for_netsuite_quote
-      ns_quote = Netsuite::Quote.create(@ns_quote_payload)
+      ns_quote_payload = prepare_payload_for_netsuite_quote
+      ns_quote = Netsuite::Quote.create(ns_quote_payload)
       if ns_quote && ns_quote[:id].present?
         Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
-        @netsuite_quote_deal_payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
-        hs_quote_deal = Hubspot::QuoteDeal.create(@netsuite_quote_deal_payload)
-        if hs_quote_deal.present? && hs_quote_deal[:id].present?
-          Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
-          association_for_deal(hs_quote_deal[:id])
-        end
+        create_and_update_hubspot_quote_deal(ns_quote)
       end
     end
 
-    def association_for_deal(hs_quote_deal_id)
-      Rails.logger.info "************** Associating Quote Deal with Company, Contact, Parent Deal and Line Item"
-      hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, args[:objectId])
-      hs_quote_deal.associate_company
-      hs_quote_deal.associate_contact
-      hs_quote_deal.associate_parent_deal
-      hs_quote_deal.associate_line_item
-    end
-
     def fetch_prop_field(field_name)
-      f_value = (properties[field_name.to_sym] || properties[field_name.to_s])[:versions]&.first
-      f_value[:value] if f_value.present?
+      prop = properties[field_name.to_sym] || properties[field_name.to_s]
+      return nil if prop.nil?
+
+      version = prop[:versions]&.first || prop["versions"]&.first
+      version[:value] || version["value"]
     end
   end
 end

@@ -38,5 +38,14 @@ module Hubspot
       end
       company
     end
+
+    def self.search(args = {})
+      @client = Hubspot::Client.new(body: args)
+
+      if company = @client.search_object("companies")
+        company = company.with_indifferent_access
+      end
+      company
+    end
   end
 end
