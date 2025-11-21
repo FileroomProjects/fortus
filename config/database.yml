@@ -1,8 +1,16 @@
-development:
+
+default: &default
   adapter: postgresql
-  host: localhost
-  database: fortus_dev
-  username: postgres
-  password: root
-  pool: 40
+  encoding: unicode
+  # host: localhost 
+  pool: 5
   timeout: 5000
+
+development:
+  <<: *default
+  database: fortus_dev
+production:
+  <<: *default
+  database: fortus-netsuite-hubspot_production
+  username: fortus-netsuite-hubspot
+  password: <%= ENV["MYAPP_DATABASE_PASSWORD"] %>
