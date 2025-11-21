@@ -21,3 +21,6 @@ production:
   queue:
       url: <%= ENV['DATABASE_URL'] %>
       pool: 5
+  cache:
+      url: <%= ENV['DATABASE_URL'] %>
+      pool: 5
