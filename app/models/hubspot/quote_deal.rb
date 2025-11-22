@@ -10,7 +10,7 @@ module Hubspot
 
     def self.create(args = {})
       @client = Hubspot::Client.new(body: args)
-      if quote_deal = @client.create_quote_deal
+      if quote_deal = @client.create_objects("deals")
         quote_deal = quote_deal.with_indifferent_access
       end
       quote_deal

@@ -9,7 +9,7 @@ module Netsuite
 
     def create_opportunity
       response = HTTParty.post(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/opportunity",
+        "#{Netsuite::Base::BASE_URL}/opportunity",
         body: body.to_json,
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -22,13 +22,13 @@ module Netsuite
         puts "Netsuite opportunity has been created id: #{ns_opportunity_id}"
         { id: ns_opportunity_id }
       else
-        raise "Netsuite Client opportunity error :" + "#{response.parsed_response}"
+        raise "Netsuite Client opportunity error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
     def create_contact
       response = HTTParty.post(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/contact",
+        "#{Netsuite::Base::BASE_URL}/contact",
         body: body.to_json,
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -40,13 +40,13 @@ module Netsuite
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
       else
-        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error: #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
     def create_customer
       response = HTTParty.post(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/customer",
+        "#{Netsuite::Base::BASE_URL}/customer",
         body: body.to_json,
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -58,7 +58,7 @@ module Netsuite
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
       else
-        raise "Netsuite Client Customer error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Customer error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
@@ -66,7 +66,7 @@ module Netsuite
       query_str = body.map { |k, v| "#{k} EQUAL \"#{v}\"" }.join(" AND ")
 
       response = HTTParty.get(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/contact",
+        "#{Netsuite::Base::BASE_URL}/contact",
         query: { q: query_str, limit: 1, offset: 0 },
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -77,7 +77,7 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)["items"].first
       else
-        raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
@@ -85,7 +85,7 @@ module Netsuite
       query_str = body.map { |k, v| "#{k} IS \"#{v}\"" }.join(" AND ")
 
       response = HTTParty.get(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/contact",
+        "#{Netsuite::Base::BASE_URL}/contact",
         query: { q: query_str, limit: 1, offset: 0 },
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -96,7 +96,7 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)["items"].first
       else
-        raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
@@ -115,13 +115,13 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)["items"].first
       else
-        raise "Netsuite Client Contact error :" + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
     def create_quote
       response = HTTParty.post(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/estimate",
+        "#{Netsuite::Base::BASE_URL}/estimate",
         body: body.to_json,
         headers: {
           "Authorization" => "Bearer #{access_token}",
@@ -133,13 +133,13 @@ module Netsuite
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
       else
-        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
     def fetch_opportunity(ns_opportunity_id)
       response = HTTParty.get(
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/opportunity/#{ns_opportunity_id}",
+        "#{Netsuite::Base::BASE_URL}/opportunity/#{ns_opportunity_id}",
         headers: {
           "Authorization" => "Bearer #{access_token}",
           "Content-Type" => "application/json"
@@ -149,7 +149,7 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)
       else
-        raise "Netsuite Client Contact error :"  + "#{response["errors"].collect { |a| a["message"] }.join(',')}"
+        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
   end

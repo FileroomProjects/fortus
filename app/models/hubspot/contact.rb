@@ -4,17 +4,17 @@ module Hubspot
       body = { deal_id: deal_id }
       @client = Hubspot::Client.new(body: body)
 
-      if contact = @client.fetch_contact_by_deal
+      if contact = @client.fetch_object_by_deal_id("contacts")
         contact = contact.with_indifferent_access
       end
       contact
     end
 
     def self.find_by_id(id)
-      body = { id: id }
-      @client = Hubspot::Client.new(body: body)
+      url = "/contacts/v1/contact/vid/#{id}/profile"
+      @client = Hubspot::Client.new(body: {})
 
-      if contact = @client.fetch_contact_by_id
+      if contact = @client.get_object_by_id(url)
         contact = contact.with_indifferent_access
       end
       contact

@@ -11,10 +11,10 @@ module Hubspot
     end
 
     def self.find_by_id(id)
-      body = { id: id }
-      @client = Hubspot::Client.new(body: body)
+      url = "/companies/v2/companies/#{id}"
+      @client = Hubspot::Client.new(body: {})
 
-      if company = @client.fetch_company_by_id
+      if company = @client.get_object_by_id(url)
         company = company.with_indifferent_access
       end
       company
@@ -24,7 +24,7 @@ module Hubspot
       body = { deal_id: deal_id }
       @client = Hubspot::Client.new(body: body)
 
-      if company = @client.fetch_company_by_deal
+      if company = @client.fetch_object_by_deal_id("companies")
         company = company.with_indifferent_access
       end
       company

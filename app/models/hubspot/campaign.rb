@@ -4,7 +4,7 @@ module Hubspot
       body = { deal_id: deal_id }
       @client = Hubspot::Client.new(body: body)
 
-      if campaign = @client.fetch_campaign_by_deal
+      if campaign = @client.fetch_object_by_deal_id("campaign")
         campaign = campaign.with_indifferent_access
       end
       campaign

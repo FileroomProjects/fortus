@@ -2,7 +2,7 @@ module Hubspot
   class Order < Hubspot::Base
     def self.create(args = {})
       @client = Hubspot::Client.new(body: args)
-      if order = @client.create_order
+      if order = @client.create_objects("orders")
         order = order.with_indifferent_access
       end
       order

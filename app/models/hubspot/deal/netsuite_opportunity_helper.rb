@@ -8,35 +8,52 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       { label: "Closed Lost", id: "1979552199" }
     ].freeze
 
-    def get_stage_from_quotes_pl(stage_code)
-      Hubspot::Deal::QUOTES_STAGES.select { |a| a[:id] == stage_code }.first[:label]
+    def create_netsuite_opportunity_and_update_hubspot_deal
+      Rails.logger.info "************** Creating Netsuite Opportunity"
+      opportunity_payload = prepare_payload_for_netsuite_opportunity
+      ns_opportunity = Netsuite::Opportunity.create(opportunity_payload)
+      if ns_opportunity && ns_opportunity[:id].present?
+        Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
+        @netsuite_opportunity_id = ns_opportunity[:id]
+        Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
+        update({
+          "netsuite_opportunity_id": ns_opportunity[:id]
+        })
+      else
+        raise "Failed to create netsuite opportunity"
+      end
     end
 
-    def prepare_payload_for_netsuite_opportunity
-      {
-        "title": fetch_prop_field(:dealname),
-        "memo": "Test opportunity created via API new",
-        "tranDate": Time.at(fetch_prop_field(:createdate).to_i / 1000).utc.strftime("%Y-%m-%d"),
-        "expectedCloseDate": Time.at(fetch_prop_field(:closedate).to_i / 1000).utc.strftime("%Y-%m-%d"),
-        "status": "Open",
-        "probability": fetch_prop_field(:hs_deal_stage_probability).to_f,
-        "entity": { "id": netsuite_company_id, "type": "customer" },
-        "contact": { "id": netsuite_contact_id, "type": "contact" },
-        "currency": { "id": "2", "type": "currency", "refName": fetch_prop_field(:deal_currency_code) },
-        "exchangeRate": 1.0,
-        "isBudgetApproved": false,
-        "canHaveStackable": false,
-        "shipIsResidential": false,
-        "shipOverride": false,
-        "rangeHigh": 0.0,
-        "rangeLow": 0.0,
-        "weightedTotal": 0.0,
-        "totalCostEstimate": 0.0,
-        "estGrossProfit": 0.0,
-        "projectedTotal": fetch_prop_field(:hs_projected_amount).to_f,
-        "total": fetch_prop_field(:hs_projected_amount).to_f,
-        "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
-      }
-    end
+    private
+      def get_stage_from_quotes_pl(stage_code)
+        Hubspot::Deal::QUOTES_STAGES.select { |a| a[:id] == stage_code }.first[:label]
+      end
+
+      def prepare_payload_for_netsuite_opportunity
+        {
+          "title": fetch_prop_field(:dealname),
+          "memo": "Test opportunity created via API new",
+          "tranDate": Time.at(fetch_prop_field(:createdate).to_i / 1000).utc.strftime("%Y-%m-%d"),
+          "expectedCloseDate": Time.at(fetch_prop_field(:closedate).to_i / 1000).utc.strftime("%Y-%m-%d"),
+          "status": "Open",
+          "probability": fetch_prop_field(:hs_deal_stage_probability).to_f * 100, # Probability must be equal to or greater than 1.
+          "entity": { "id": netsuite_company_id, "type": "customer" },
+          "contact": { "id": netsuite_contact_id, "type": "contact" },
+          "currency": { "id": "2", "type": "currency" },
+          "exchangeRate": 1.0,
+          "isBudgetApproved": false,
+          "canHaveStackable": false,
+          "shipIsResidential": false,
+          "shipOverride": false,
+          "rangeHigh": 0.0,
+          "rangeLow": 0.0,
+          "weightedTotal": 0.0,
+          "totalCostEstimate": 0.0,
+          "estGrossProfit": 0.0,
+          "projectedTotal": fetch_prop_field(:hs_projected_amount).to_f,
+          "total": fetch_prop_field(:hs_projected_amount).to_f,
+          "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
+        }
+      end
   end
 end

@@ -77,22 +77,6 @@ module Hubspot
       end
     end
 
-    def create_netsuite_opportunity_and_update_hubspot_deal
-      Rails.logger.info "************** Creating Netsuite Opportunity"
-      opportunity_payload = prepare_payload_for_netsuite_opportunity
-      ns_opportunity = Netsuite::Opportunity.create(opportunity_payload)
-      if ns_opportunity && ns_opportunity[:id].present?
-        Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
-        @netsuite_opportunity_id = ns_opportunity[:id]
-        Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
-        update({
-          "netsuite_opportunity_id": ns_opportunity[:id]
-        })
-      else
-        raise "Failed to create netsuite opportunity"
-      end
-    end
-
     def create_netsuite_quote_estimate_and_create_hubspot_quote_deal
       Rails.logger.info "************** Creating Netsuite Quote"
       ns_quote_payload = prepare_payload_for_netsuite_quote

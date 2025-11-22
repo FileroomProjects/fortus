@@ -2,7 +2,7 @@ module Hubspot
   class Product < Hubspot::Base
     def self.create(args = {})
       @client = Hubspot::Client.new(body: args)
-      if product = @client.create_product
+      if product = @client.create_objects("products")
         product = product.with_indifferent_access
       end
       product
