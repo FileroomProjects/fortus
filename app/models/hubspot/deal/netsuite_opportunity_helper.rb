@@ -8,20 +8,36 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       { label: "Closed Lost", id: "1979552199" }
     ].freeze
 
+    def ensure_netsuite_opportunity
+      if @netsuite_opportunity_id.blank?
+        create_netsuite_opportunity_and_update_hubspot_deal
+        return
+      end
+
+      netsuite_opportunity = Netsuite::Opportunity.show(@netsuite_opportunity_id)
+      if netsuite_opportunity.present?
+        Rails.logger.info "************** Netsuite Opportunity already exists with ID #{netsuite_opportunity[:id]}"
+      else
+        create_netsuite_opportunity_and_update_hubspot_deal
+      end
+    end
+
     def create_netsuite_opportunity_and_update_hubspot_deal
       Rails.logger.info "************** Creating Netsuite Opportunity"
-      opportunity_payload = prepare_payload_for_netsuite_opportunity
-      ns_opportunity = Netsuite::Opportunity.create(opportunity_payload)
-      if ns_opportunity && ns_opportunity[:id].present?
-        Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
-        @netsuite_opportunity_id = ns_opportunity[:id]
-        Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
-        update({
-          "netsuite_opportunity_id": ns_opportunity[:id]
-        })
-      else
-        raise "Failed to create netsuite opportunity"
+
+      payload = prepare_payload_for_netsuite_opportunity
+      ns_opportunity = Netsuite::Opportunity.create(payload)
+
+      unless ns_opportunity[:id].present?
+        raise "Failed to create Netsuite Opportunity"
       end
+
+      @netsuite_opportunity_id = ns_opportunity[:id]
+
+      Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
+      Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
+
+      update({ "netsuite_opportunity_id": ns_opportunity[:id] })
     end
 
     private
@@ -33,8 +49,8 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
         {
           "title": fetch_prop_field(:dealname),
           "memo": "Test opportunity created via API new",
-          "tranDate": Time.at(fetch_prop_field(:createdate).to_i / 1000).utc.strftime("%Y-%m-%d"),
-          "expectedCloseDate": Time.at(fetch_prop_field(:closedate).to_i / 1000).utc.strftime("%Y-%m-%d"),
+          "tranDate": format_timestamp(fetch_prop_field(:createdate)),
+          "expectedCloseDate": format_timestamp(fetch_prop_field(:closedate)),
           "status": "Open",
           "probability": fetch_prop_field(:hs_deal_stage_probability).to_f * 100, # Probability must be equal to or greater than 1.
           "entity": { "id": netsuite_company_id, "type": "customer" },
@@ -54,6 +70,10 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
           "total": fetch_prop_field(:hs_projected_amount).to_f,
           "custbody14": { "id": "120", "type": "customList" }  # Use internal ID
         }
+      end
+
+      def format_timestamp(ms_timestamp)
+        Time.at(ms_timestamp.to_i / 1000).utc.strftime("%Y-%m-%d")
       end
   end
 end

@@ -9,11 +9,9 @@ module Hubspot
     end
 
     def self.create(args = {})
-      @client = Hubspot::Client.new(body: args)
-      if quote_deal = @client.create_objects("deals")
-        quote_deal = quote_deal.with_indifferent_access
-      end
-      quote_deal
+      client = Hubspot::Client.new(body: args)
+      quote_deal = client.create_objects("deals")
+      quote_deal&.with_indifferent_access
     end
 
     def associate_company
@@ -41,8 +39,8 @@ module Hubspot
     end
 
     def create_association(body, from, to)
-      @client = Hubspot::Client.new(body: body)
-      @client.create_association(from, to)
+      client = Hubspot::Client.new(body: body)
+      client.create_association(from, to)
     end
 
     def prepare_association_payload(from_id, to_id, type)
