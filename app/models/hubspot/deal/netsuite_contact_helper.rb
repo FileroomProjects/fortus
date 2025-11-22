@@ -32,47 +32,48 @@ module Hubspot::Deal::NetsuiteContactHelper
       end
     end
 
-    def find_or_create_netsuite_contact(hs_contact_details)
-      ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
-      email = hs_contact_details[:email]&.fetch("value", "")
-      ns_contact = nil
+    private
+      def find_or_create_netsuite_contact(hs_contact_details)
+        ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
+        email = hs_contact_details[:email]&.fetch("value", "")
+        ns_contact = nil
 
-      if ns_contact_id.present?
-        Rails.logger.info "************** Searching Netsuite Contact by id"
-        ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
-        if ns_contact.present?
-          Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
-          return "found by netsuite_contact_id"
+        if ns_contact_id.present?
+          Rails.logger.info "************** Searching Netsuite Contact by id"
+          ns_contact = Netsuite::Contact.find_by_id(id: hs_contact_details[:netsuite_contact_id]["value"])
+          if ns_contact.present?
+            Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
+            return "found by netsuite_contact_id"
+          end
         end
+
+        if email.present?
+          Rails.logger.info "************** Searching Netsuite Contact by email"
+          ns_contact = Netsuite::Contact.find_by(email: email)
+        end
+
+        if ns_contact.blank? && email.present?
+          Rails.logger.info "************** Creating Netsuite Contact"
+          ns_contact = create_contact(hs_contact_details)
+        end
+
+        ns_contact
       end
 
-      if email.present?
-        Rails.logger.info "************** Searching Netsuite Contact by email"
-        ns_contact = Netsuite::Contact.find_by(email: email)
+      def create_contact(contact_details)
+        Netsuite::Contact.create(
+          "firstName": hs_value(contact_details, :firstname, "dummy"),
+          "lastName": hs_value(contact_details, :lastname, "dummy"),
+          "email": hs_value(contact_details, :email, "dummy"),
+          "jobTitle":  hs_value(contact_details, :jobtitle, "dummy"),
+          "isInactive": false,
+          "mobilePhone": hs_value(contact_details, :phone, "0000000000"),
+          "company": { "id": netsuite_company_id, "type": "customer" }
+        )
       end
 
-      if ns_contact.blank? && email.present?
-        Rails.logger.info "************** Creating Netsuite Contact"
-        ns_contact = create_contact(hs_contact_details)
+      def hs_value(hs_hash, key, value)
+        hs_hash[key]&.fetch("value", "") || value
       end
-
-      ns_contact
-    end
-
-    def create_contact(contact_details)
-      Netsuite::Contact.create(
-        "firstName": hs_value(contact_details, :firstname),
-        "lastName": "Doe",
-        "email": hs_value(contact_details, :email),
-        "jobTitle":  hs_value(contact_details, :jobtitle),
-        "isInactive": false,
-        "mobilePhone": hs_value(contact_details, :phone).presence || "4843211147",
-        "company": { "id": netsuite_company_id, "type": "customer" }
-      )
-    end
-
-    def hs_value(hs_hash, key)
-      hs_hash[key]&.fetch("value", "") || ""
-    end
   end
 end
