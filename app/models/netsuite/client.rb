@@ -19,7 +19,7 @@ module Netsuite
 
       if response.code == 204
         ns_opportunity_id = response.headers[:location].split("/").last if response.headers[:location].present?
-        puts "Netsuite opportunity has been created id: #{ns_opportunity_id}"
+        Rails.logger.info "****************** Netsuite opportunity has been created id: #{ns_opportunity_id}"
         { id: ns_opportunity_id }
       else
         raise "Netsuite Client opportunity error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
@@ -115,7 +115,7 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)["items"].first
       else
-        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
+        raise "Netsuite Client Customer error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
@@ -133,7 +133,7 @@ module Netsuite
         ns_contact_id = response.headers[:location].split("/").last
         { id: ns_contact_id }
       else
-        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
+        raise "Netsuite Client Estimate error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
 
@@ -149,7 +149,7 @@ module Netsuite
       if response.code == 200
         JSON.parse(response.parsed_response)
       else
-        raise "Netsuite Client Contact error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
+        raise "Netsuite Client Opportunity error : #{JSON.parse(response)["o:errorDetails"].map { |e| e["detail"] }.join(", ")}"
       end
     end
   end
