@@ -2,19 +2,26 @@ module Hubspot::Deal::NetsuiteQuoteHelper
   extend ActiveSupport::Concern
 
   included do
+    NETSUITE_LOCATION_ID = "80"
+    NETSUITE_CASE_TYPE_ID = "6"
+    NETSUITE_ORIGIN_REF_NAME  = "Opportunity "
+
     def prepare_payload_for_netsuite_quote
       hs_contact_details = associated_contact_details
-      hs_company_details = associated_company_details
+      ns_company_id = associated_company_details[:netsuite_company_id]&.fetch("value", "")
+      ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
+      raise "netsuite_company_id is not present in hubspot company details" if ns_company_id.blank?
+      raise "netsuite_contact_id is not present in hubspot contact details" if ns_contact_id.blank?
       {
-        "entity": { "id": hs_company_details[:netsuite_company_id]&.fetch("value", "") },
-        "custbody_so_title": fetch_prop_field(:dealname),
-        "location": { "id": "80" },
-        "custbody34": Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "custbody20": { refName: "Opportunity " }, # Origin
-        "opportunity": { "id": @netsuite_opportunity_id }, # Delivery Contact Number
-        "custbody37": { "id": "6" }, # Case Type
-        "custbody1": { "id": hs_contact_details[:netsuite_contact_id]&.fetch("value", "") }, # contact
-        "custbody_phone_number": hs_contact_details[:phone]&.fetch("value", "") || "4843211147",
+        "entity": { "id": ns_company_id }, # Customer
+        "custbody_so_title": fetch_prop_field(:dealname), # Title
+        "location": { "id": NETSUITE_LOCATION_ID },
+        "custbody34": Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"), # Incident Date/ Time
+        "custbody20": { refName: NETSUITE_ORIGIN_REF_NAME }, # Origin
+        "opportunity": { "id": @netsuite_opportunity_id },
+        "custbody37": { "id": NETSUITE_CASE_TYPE_ID }, # Case Type
+        "custbody1": { "id": ns_contact_id }, # Contact
+        "custbody_phone_number": hs_value(hs_contact_details, :phone, "0000000000"), # Delivery Contact Number
         "item": {
           "items": [
             {

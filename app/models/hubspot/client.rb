@@ -2,280 +2,152 @@ module Hubspot
   class Client
     attr_accessor :body
 
+    BASE_URL = "https://api.hubapi.com"
+
     def initialize(args)
       @body = args[:body]
     end
 
     def fetch_deal
-      response = HTTParty.get(
-        "https://api.hubapi.com/deals/v1/deal/#{body[:deal_id]}",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["results"]&.first
-    end
-
-    def fetch_campaign_by_deal
-      response = HTTParty.get(
-        "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/campaign",
-        headers: { "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }
-      )
-
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["results"]&.first
-    end
-
-    def fetch_company
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/associations/deal/company/batch/read",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response["results"]
-    end
-
-    def fetch_contact_by_deal
-      response = HTTParty.get(
-        "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/contacts",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["results"]&.first
-    end
-
-    def fetch_company_by_deal
-      response = HTTParty.get(
-        "https://api.hubapi.com/crm/v4/objects/deals/#{body[:deal_id]}/associations/companies",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["results"]&.first
-    end
-
-    def fetch_contact_by_id
-      response = HTTParty.get(
-        "https://api.hubapi.com/contacts/v1/contact/vid/#{body[:id]}/profile",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["properties"]
-    end
-
-    def fetch_company_by_id
-      response = HTTParty.get(
-        "https://api.hubapi.com/companies/v2/companies/#{body[:id]}",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
-      response.parsed_response["properties"]
-    end
-
-    def update_contact
-      contact_id = body.delete(:contactId)
-      response = HTTParty.patch(
-        "https://api.hubapi.com/crm/v3/objects/contacts/#{contact_id}",
-        body: { 'properties': body }.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-      if response.code == 200
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def update_deal
-      deal_id = body.delete(:deal_id)
-      response = HTTParty.patch(
-        "https://api.hubapi.com/crm/v3/objects/deals/#{deal_id}",
-        body: { 'properties': body }.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 200
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def create_quote_deal
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/objects/deals",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 201
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def update_company
-      company_id = body.delete(:companyId)
-      response = HTTParty.patch(
-        "https://api.hubapi.com/crm/v3/objects/companies/#{company_id}",
-        body: { 'properties': body }.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 200
-        return response.parsed_response
-      end
-      raise response.parsed_response.collect { |a| a["message"] }.join(",")
-    end
-
-    def create_association(from_object_type, to_object_type)
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 201
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def create_line_item
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/objects/line_items",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 201
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def create_order
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/objects/orders",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 201
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def create_product
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/objects/products",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
-
-      if response.code == 201
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
-      end
-    end
-
-    def search_object(object_type)
-      response = HTTParty.post(
-        "https://api.hubapi.com/crm/v3/objects/#{object_type}/search",
-        body: body.to_json,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
-        }
-      )
+      url = "/deals/v1/deal/#{body[:deal_id]}"
+      response = get_request(url)
 
       if response.code == 200
         response.parsed_response["results"]&.first
       else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
+        raise response.parsed_response["message"]
       end
+    end
+
+    def fetch_company
+      url = "/crm/v3/associations/deal/company/batch/read"
+      response = post_request(url, body)
+
+      if response.code == 200
+        response.parsed_response["results"]
+      elsif response.code == 207
+        raise response.parsed_response["errors"].map { |e| e["message"] }.join(", ")
+      else
+        raise response.parsed_response["message"]
+      end
+    end
+
+    def create_association(from_object_type, to_object_type)
+      url = "/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create"
+      response = post_request(url, body)
+
+      handle_created_responce(response)
+    end
+
+    def search_object(object_type)
+      url = "/crm/v3/objects/#{object_type}/search"
+      response = post_request(url, body)
+
+      if response.code == 200
+        response.parsed_response["results"]&.first
+      else
+        handle_error(response)
+      end
+    end
+
+    def create_objects(object_type)
+      url = "/crm/v3/objects/#{object_type}"
+      response = post_request(url, body)
+
+      handle_created_responce(response)
+    end
+
+    def fetch_object_by_deal_id(object_type)
+      url = "/crm/v4/objects/deals/#{body[:deal_id]}/associations/#{object_type}"
+      response = get_request(url)
+
+      if response["errors"] && response["errors"].any?
+        raise response["errors"].collect { |a| a["message"] }.join(",")
+      end
+      response.parsed_response["results"]&.first
+    end
+
+    def update_contact
+      contact_id = body.delete(:contactId)
+      update_object("contacts/#{contact_id}", { 'properties': body })
+    end
+
+    def update_deal
+      deal_id = body.delete(:deal_id)
+      update_object("deals/#{deal_id}", { 'properties': body })
+    end
+
+    def update_company
+      company_id = body.delete(:companyId)
+      update_object("companies/#{company_id}", { 'properties': body })
     end
 
     def update_order
       order_id = body[:properties].delete(:order_id)
-      response = HTTParty.patch(
-        "https://api.hubapi.com/crm/v3/objects/orders/#{order_id}",
-        body: body.to_json,
-        headers: {
+      update_object("orders/#{order_id}", body)
+    end
+
+    def get_object_by_id(url)
+      response = get_request(url)
+
+      if response["errors"] && response["errors"].any?
+        raise response["errors"].collect { |a| a["message"] }.join(",")
+      end
+      response.parsed_response["properties"]
+    end
+
+    private
+      def update_object(object_type_and_id, body)
+        url = "/crm/v3/objects/#{object_type_and_id}"
+        response = patch_request(url, body)
+
+        if response.code == 200
+          response.parsed_response
+        else
+          handle_error(response)
+        end
+      end
+
+      def post_request(url, body)
+        HTTParty.post(
+          "#{BASE_URL}#{url}",
+          body: body.to_json,
+          headers: headers
+        )
+      end
+
+      def get_request(url)
+        HTTParty.get(
+          "#{BASE_URL}#{url}",
+          headers: headers
+        )
+      end
+
+      def patch_request(url, body)
+        HTTParty.patch(
+          "#{BASE_URL}#{url}",
+          body: body.to_json,
+          headers: headers
+        )
+      end
+
+      def handle_created_responce(response)
+        if response.code == 201
+          response.parsed_response
+        else
+          handle_error(response)
+        end
+      end
+
+      def handle_error(response)
+        raise response.parsed_response["errors"].map { |e| e["message"] }.join(", ")
+      end
+
+      def headers
+        {
           "Content-Type": "application/json",
           "Authorization": "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}"
         }
-      )
-
-      if response.code == 200
-        response.parsed_response
-      else
-        raise response.parsed_response.collect { |a| a["message"] }.join(",")
       end
-    end
   end
 end

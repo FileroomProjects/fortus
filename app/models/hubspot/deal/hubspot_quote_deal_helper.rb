@@ -3,12 +3,13 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
   included do
     def create_and_update_hubspot_quote_deal(ns_quote)
-      netsuite_quote_deal_payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
-      hs_quote_deal = Hubspot::QuoteDeal.create(netsuite_quote_deal_payload)
-      if hs_quote_deal.present? && hs_quote_deal[:id].present?
-        Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
-        association_for_deal(hs_quote_deal[:id])
-      end
+      payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
+      hs_quote_deal = Hubspot::QuoteDeal.create(payload)
+
+      return unless hs_quote_deal&.dig(:id).present?
+
+      Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
+      association_for_deal(hs_quote_deal[:id])
     end
 
     def line_item_payload
@@ -24,15 +25,16 @@ module Hubspot::Deal::HubspotQuoteDealHelper
     private
       def find_quote_deal
         hs_deal = Hubspot::Deal.search(quote_deal_search_payload)
-        if hs_deal.present? && hs_deal[:id].present?
-          Rails.logger.info "************** Hubspot quote deal found ID #{hs_deal[:id]}"
-          hs_deal
-        end
+
+        return unless hs_deal[:id].present?
+
+        Rails.logger.info "************** Hubspot quote deal found ID #{hs_deal[:id]}"
+        hs_deal
       end
 
       def association_for_deal(hs_quote_deal_id)
         Rails.logger.info "************** Associating Quote Deal with Company, Contact, Parent Deal and Line Item"
-        hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, args[:objectId])
+        hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, deal_id)
         hs_quote_deal.associate_company
         hs_quote_deal.associate_contact
         hs_quote_deal.associate_parent_deal
@@ -47,7 +49,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
             "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"], # Open stage
             "netsuite_quote_id": ns_quote_id,
             "amount": fetch_prop_field(:amount),
-            "netsuite_location": "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/estimate/#{ns_quote_id}",
+            "netsuite_location": "#{Netsuite::Base::BASE_URL}/estimate/#{ns_quote_id}",
             "netsuite_origin": "netsuite"
           }
         }
