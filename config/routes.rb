@@ -20,6 +20,5 @@ Rails.application.routes.draw do
   resource :hubspot, only: [] do
     post :callback
     post :create_contact_customer
-    post :create_quote_opportunity
   end
 end

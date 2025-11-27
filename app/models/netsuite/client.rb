@@ -137,9 +137,9 @@ module Netsuite
       end
     end
 
-    def fetch_opportunity(ns_opportunity_id)
+    def fetch_object(object_name_and_id)
       response = HTTParty.get(
-        "#{Netsuite::Base::BASE_URL}/opportunity/#{ns_opportunity_id}",
+        "#{Netsuite::Base::BASE_URL}/#{object_name_and_id}",
         headers: {
           "Authorization" => "Bearer #{access_token}",
           "Content-Type" => "application/json"

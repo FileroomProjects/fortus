@@ -2,6 +2,14 @@ module Hubspot::Deal::HubspotQuoteDealHelper
   extend ActiveSupport::Concern
 
   included do
+    def find_or_create_hubspot_child_deal(ns_quote)
+      hs_deal = find_quote_deal(ns_quote[:id])
+
+      return if hs_deal&.dig(:id).present?
+
+      create_and_update_hubspot_quote_deal(ns_quote)
+    end
+
     def create_and_update_hubspot_quote_deal(ns_quote)
       payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
       hs_quote_deal = Hubspot::QuoteDeal.create(payload)
@@ -23,10 +31,11 @@ module Hubspot::Deal::HubspotQuoteDealHelper
     end
 
     private
-      def find_quote_deal
-        hs_deal = Hubspot::Deal.search(quote_deal_search_payload)
+      def find_quote_deal(ns_quote_id)
+        payload = quote_deal_search_payload(ns_quote_id)
+        hs_deal = Hubspot::Deal.search(payload)
 
-        return unless hs_deal[:id].present?
+        return nil unless hs_deal&.dig(:id).present?
 
         Rails.logger.info "************** Hubspot quote deal found ID #{hs_deal[:id]}"
         hs_deal
@@ -44,15 +53,41 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       def prepare_payload_for_netsuite_quote_deal(ns_quote_id)
         {
           "properties": {
-            "dealname": fetch_prop_field(:dealname),
-            "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"], # Netsuite Quotes pipeline
-            "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"], # Open stage
+            "dealname": "#{fetch_prop_field(:dealname)} child",
+            "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
+            "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
             "netsuite_quote_id": ns_quote_id,
             "amount": fetch_prop_field(:amount),
-            "netsuite_location": "#{Netsuite::Base::BASE_URL}/estimate/#{ns_quote_id}",
-            "netsuite_origin": "netsuite"
+            "netsuite_location": netsuite_estimate_location(ns_quote_id),
+            "netsuite_origin": "netsuite",
+            "netsuite_opportunity_id": @netsuite_opportunity_id
           }
         }
+      end
+
+      def quote_deal_search_payload(ns_quote_id)
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "netsuite_quote_id",
+                  operator: "EQ",
+                  value: ns_quote_id
+                },
+                {
+                  propertyName: "pipeline",
+                  operator: "EQ",
+                  value: ENV["HUBSPOT_DEFAULT_PIPELINE"]
+                }
+              ]
+            }
+          ]
+        }
+      end
+
+      def netsuite_estimate_location(ns_quote_id)
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_quote_id}&whence="
       end
   end
 end
