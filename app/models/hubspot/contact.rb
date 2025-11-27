@@ -4,8 +4,16 @@ module Hubspot
       body = { deal_id: deal_id }
       client = Hubspot::Client.new(body: body)
 
-      contact = client.fetch_object_by_deal_id("contacts")
-      contact&.with_indifferent_access
+      contacts = client.fetch_object_by_deal_id("contacts")
+
+      primary_contact = contacts.find do |contact|
+        contact["associationTypes"].any? { |a| a["label"] == "Primary Contact" }
+      end
+
+      # if primary contact not present select defualt one
+      selected_contact = primary_contact || contacts.first
+
+      selected_contact&.with_indifferent_access
     end
 
     def self.find_by_id(id)

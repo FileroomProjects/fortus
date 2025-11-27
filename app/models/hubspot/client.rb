@@ -64,7 +64,7 @@ module Hubspot
       if response["errors"] && response["errors"].any?
         raise response["errors"].collect { |a| a["message"] }.join(",")
       end
-      response.parsed_response["results"]&.first
+      response.parsed_response["results"]
     end
 
     def update_contact

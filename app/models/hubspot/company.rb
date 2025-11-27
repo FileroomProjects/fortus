@@ -21,8 +21,13 @@ module Hubspot
       body = { deal_id: deal_id }
       client = Hubspot::Client.new(body: body)
 
-      company = client.fetch_object_by_deal_id("companies")
-      company&.with_indifferent_access
+      companies = client.fetch_object_by_deal_id("companies")
+
+      primary_company = companies.find do |c|
+        c["associationTypes"].any? { |a| a["label"] == "Primary" }
+      end
+
+      primary_company&.with_indifferent_access
     end
 
     def self.update(args = {})
