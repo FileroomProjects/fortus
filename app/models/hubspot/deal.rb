@@ -54,22 +54,16 @@ module Hubspot
       handle_company_and_update_hubspot
 
       handle_contact_and_update_hubspot
+
+      sync_quotes_and_opportunity_with_netsuite
     end
 
     def sync_quotes_and_opportunity_with_netsuite
-      ensure_netsuite_opportunity
+      find_or_create_netsuite_opportunity
 
-      create_netsuite_quote_estimate_and_create_hubspot_quote_deal if @netsuite_opportunity_id.present?
-    end
+      ns_quote = find_or_create_netsuit_quote if @netsuite_opportunity_id.present?
 
-    def create_netsuite_quote_estimate_and_create_hubspot_quote_deal
-      Rails.logger.info "************** Creating Netsuite Quote"
-      ns_quote = Netsuite::Quote.create(prepare_payload_for_netsuite_quote)
-
-      if ns_quote[:id].present?
-        Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
-        create_and_update_hubspot_quote_deal(ns_quote)
-      end
+      find_or_create_hubspot_child_deal(ns_quote)
     end
 
     def fetch_prop_field(field_name)

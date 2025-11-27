@@ -8,10 +8,10 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       { label: "Closed Lost", id: "1979552199" }
     ].freeze
 
-    def ensure_netsuite_opportunity
+    def find_or_create_netsuite_opportunity
       if @netsuite_opportunity_id.blank?
-        create_netsuite_opportunity_and_update_hubspot_deal
-        return
+        ns_opportunity = create_netsuite_opportunity_and_update_hubspot_deal
+        return ns_opportunity
       end
 
       netsuite_opportunity = Netsuite::Opportunity.show(@netsuite_opportunity_id)
@@ -28,7 +28,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       payload = prepare_payload_for_netsuite_opportunity
       ns_opportunity = Netsuite::Opportunity.create(payload)
 
-      unless ns_opportunity[:id].present?
+      unless ns_opportunity && ns_opportunity[:id].present?
         raise "Failed to create Netsuite Opportunity"
       end
 
@@ -38,6 +38,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
 
       update({ "netsuite_opportunity_id": ns_opportunity[:id] })
+      ns_opportunity
     end
 
     private
