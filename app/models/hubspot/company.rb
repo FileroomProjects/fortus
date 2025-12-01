@@ -18,16 +18,13 @@ module Hubspot
     end
 
     def self.find_by_deal_id(deal_id)
-      body = { deal_id: deal_id }
+      body = { from_object_id: deal_id }
       client = Hubspot::Client.new(body: body)
 
-      companies = client.fetch_object_by_deal_id("companies")
+      companies = client.fetch_object_by_associated_object_id("deals", "companies")
 
-      primary_company = companies.find do |c|
-        c["associationTypes"].any? { |a| a["label"] == "Primary" }
-      end
-
-      primary_company&.with_indifferent_access
+      company = primary_company(companies)
+      company&.with_indifferent_access
     end
 
     def self.update(args = {})
@@ -43,5 +40,14 @@ module Hubspot
       company = client.search_object("companies")
       company&.with_indifferent_access
     end
+
+    private
+      def self.primary_company(companies)
+        return unless companies.present?
+
+        companies.find do |company|
+          company["associationTypes"]&.any? { |a| a["label"] == "Primary" }
+        end
+      end
   end
 end

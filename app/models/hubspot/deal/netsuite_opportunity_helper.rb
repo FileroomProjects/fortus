@@ -28,7 +28,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       payload = prepare_payload_for_netsuite_opportunity
       ns_opportunity = Netsuite::Opportunity.create(payload)
 
-      unless ns_opportunity && ns_opportunity[:id].present?
+      unless object_present_with_id?(ns_opportunity)
         raise "Failed to create Netsuite Opportunity"
       end
 

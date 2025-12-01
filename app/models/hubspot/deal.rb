@@ -1,14 +1,18 @@
 module Hubspot
   class Deal < Hubspot::Base
-    include Hubspot::Deal::NetsuiteOpportunityHelper
-    include Hubspot::Deal::NetsuiteContactHelper
-    include Hubspot::Deal::NetsuiteCompanyHelper
-    include Hubspot::Deal::NetsuiteQuoteHelper
-    include Hubspot::Deal::HubspotQuoteDealHelper
+    include Hubspot::Deal::BaseHelper
 
     def update(attributes = {})
       attributes = attributes.merge({ deal_id: deal_id })
-      Hubspot::Client.new(body: attributes).update_deal
+      client = Hubspot::Client.new(body: attributes)
+      deal = client.update_deal
+      deal&.with_indifferent_access
+    end
+
+    def self.update(args = {})
+      client = Hubspot::Client.new(body: args)
+      deal = client.update_deal
+      deal&.with_indifferent_access
     end
 
     def self.search(args = {})

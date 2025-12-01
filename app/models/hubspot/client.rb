@@ -3,67 +3,54 @@ module Hubspot
     attr_accessor :body
 
     BASE_URL = "https://api.hubapi.com"
+    include HttpsRequest
 
     def initialize(args)
       @body = args[:body]
     end
 
     def fetch_deal
-      url = "/deals/v1/deal/#{body[:deal_id]}"
-      response = get_request(url)
+      response = get("/deals/v1/deal/#{body[:deal_id]}")
 
-      if response.code == 200
-        response.parsed_response["results"]&.first
-      else
-        raise response.parsed_response["message"]
-      end
+      handle_error(response) unless response.code == 200
+
+      response.parsed_response["results"]&.first
     end
 
     def fetch_company
-      url = "/crm/v3/associations/deal/company/batch/read"
-      response = post_request(url, body)
+      response = post("/crm/v3/associations/deal/company/batch/read", body)
 
-      if response.code == 200
-        response.parsed_response["results"]
-      elsif response.code == 207
-        raise response.parsed_response["errors"].map { |e| e["message"] }.join(", ")
-      else
-        raise response.parsed_response["message"]
-      end
+      handle_error(response) unless response.code == 200
+
+      response.parsed_response["results"]
     end
 
     def create_association(from_object_type, to_object_type)
-      url = "/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create"
-      response = post_request(url, body)
+      response = post("/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create", body)
 
       handle_created_responce(response)
     end
 
     def search_object(object_type)
-      url = "/crm/v3/objects/#{object_type}/search"
-      response = post_request(url, body)
+      response = post("/crm/v3/objects/#{object_type}/search", body)
 
-      if response.code == 200
-        response.parsed_response["results"]&.first
-      else
-        handle_error(response)
-      end
+      handle_error(response) unless response.code == 200
+
+      response.parsed_response["results"]&.first
     end
 
     def create_objects(object_type)
-      url = "/crm/v3/objects/#{object_type}"
-      response = post_request(url, body)
+      response = post("/crm/v3/objects/#{object_type}", body)
 
       handle_created_responce(response)
     end
 
-    def fetch_object_by_deal_id(object_type)
-      url = "/crm/v4/objects/deals/#{body[:deal_id]}/associations/#{object_type}"
-      response = get_request(url)
+    def fetch_object_by_associated_object_id(from_object_type, object_type)
+      url = "/crm/v4/objects/#{from_object_type}/#{body[:from_object_id]}/associations/#{object_type}"
+      response = get(url)
 
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
+      handle_error(response) unless response.code == 200
+
       response.parsed_response["results"]
     end
 
@@ -88,59 +75,55 @@ module Hubspot
     end
 
     def get_object_by_id(url)
-      response = get_request(url)
+      response = get(url)
 
-      if response["errors"] && response["errors"].any?
-        raise response["errors"].collect { |a| a["message"] }.join(",")
-      end
+      handle_error(response) unless response.code == 200
+
       response.parsed_response["properties"]
     end
 
+    def update_object(object_type_and_id, body)
+      url = "/crm/v3/objects/#{object_type_and_id}"
+      response = patch_request(full_url(url), body, headers)
+
+      handle_error(response) unless response.code == 200
+
+      response.parsed_response
+    end
+
+    def remove_association(url)
+      response = delete_request(full_url(url), headers)
+
+      handle_error(response) unless response.code == 204
+
+      "success"
+    end
+
     private
-      def update_object(object_type_and_id, body)
-        url = "/crm/v3/objects/#{object_type_and_id}"
-        response = patch_request(url, body)
-
-        if response.code == 200
-          response.parsed_response
-        else
-          handle_error(response)
-        end
-      end
-
-      def post_request(url, body)
-        HTTParty.post(
-          "#{BASE_URL}#{url}",
-          body: body.to_json,
-          headers: headers
-        )
-      end
-
-      def get_request(url)
-        HTTParty.get(
-          "#{BASE_URL}#{url}",
-          headers: headers
-        )
-      end
-
-      def patch_request(url, body)
-        HTTParty.patch(
-          "#{BASE_URL}#{url}",
-          body: body.to_json,
-          headers: headers
-        )
-      end
-
       def handle_created_responce(response)
-        if response.code == 201
-          response.parsed_response
-        else
-          handle_error(response)
-        end
+        handle_error(response) unless response.code == 201
+
+        response.parsed_response
+      end
+
+      def get(path)
+        get_request(full_url(path), headers)
+      end
+
+      def post(path, body)
+        post_request(full_url(path), body, headers)
+      end
+
+      def full_url(path)
+        "#{BASE_URL}#{path}"
       end
 
       def handle_error(response)
-        raise response.parsed_response["errors"].map { |e| e["message"] }.join(", ")
+        if response.parsed_response["errors"].present?
+          raise response.parsed_response["errors"].map { |e| e["message"] }.join(", ")
+        else
+          raise response.parsed_response["message"]
+        end
       end
 
       def headers
