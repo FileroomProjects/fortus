@@ -45,4 +45,8 @@ class NetsuiteController < ApplicationController
     @netsuite.sync_sales_order_with_hubspot
     render json: { success: true }
   end
+
+  def sync_estimate
+    
+  end
 end
