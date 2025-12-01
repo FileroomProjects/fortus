@@ -17,8 +17,8 @@ module Netsuite
     def sync_quote_estimate_with_quote_deal
       updated_hs_deal = update_hubspot_quote_deal
       sync_line_items_in_hubspot_quote_deal(updated_hs_deal)
-      update_contact_info
       update_company_info
+      # update_contact_info
     end
   end
 end

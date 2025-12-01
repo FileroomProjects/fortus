@@ -18,8 +18,7 @@ module Hubspot
       body = { from_object_id: object_id }
       client = Hubspot::Client.new(body: body)
 
-      line_items = client.fetch_object_by_associated_object_id(object_type, "line_items")
-      line_items.first&.with_indifferent_access[:results]
+      client.fetch_object_by_associated_object_id(object_type, "line_items")
     end
 
     def self.update(line_item_id, body)

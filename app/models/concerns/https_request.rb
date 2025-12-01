@@ -19,7 +19,7 @@ module HttpsRequest
     end
 
     def search_query(url, query, headers)
-      HTTParty.get(url, query: query.to_json, headers: headers)
+      HTTParty.get(url, query: query, headers: headers)
     end
   end
 end

@@ -5,13 +5,13 @@ module Netsuite::Quote::Hubspot::CompanyHelper
 
   included do
     def update_company_info
-      hs_company = find_company(filters)
+      hs_company = find_company(company_filters)
       payload = payload_to_update_hubspot_company(hs_company[:id])
       update_company(payload)
     end
 
     private
-      def filters
+      def company_filters
         [
           build_search_filter("netsuite_company_id", "EQ", args[:customer][:id])
         ]
@@ -20,7 +20,7 @@ module Netsuite::Quote::Hubspot::CompanyHelper
       def payload_to_update_hubspot_company(hs_company_id)
         {
           companyId: hs_company_id,
-          "name": args[:customer][:companyName]
+          "name": args[:customer][:name]
         }
       end
   end

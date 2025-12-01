@@ -5,29 +5,26 @@ module Netsuite::Quote::Hubspot::DealHelper
 
   included do
     def update_hubspot_quote_deal
-      hs_deal = find_deal(filters)
+      hs_deal = find_deal(deal_search_filter)
       payload = payload_to_update_deal(hs_deal)
       update_deal(payload)
     end
 
     private
-      def filters
+      def deal_search_filter
         [
-          {
-            propertyName: "netsuite_quote_id",
-            operator: "EQ",
-            value: args[:estimate][:id]
-          }
+          build_search_filter("netsuite_quote_id", "EQ", args[:estimateId]),
+          build_search_filter("pipeline", "EQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
         ]
       end
 
       def payload_to_update_deal(hs_deal)
         {
           deal_id: hs_deal[:id],
-          "amount": args[:estimate][:total],
-          # "terms": args[:estimate][:terms],
-          # "contact_display": args[:estimate][:custbody_phone_number],
-          "status": args[:estimate][:entityStatus]
+          "amount": args[:total]
+          # "terms": args[:terms],
+          # "contact_display": args[:custbodyPhoneNumber],
+          # "hs_latest_approval_status": args[:status]
         }
       end
   end

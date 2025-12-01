@@ -5,6 +5,15 @@ module Netsuite::Hubspot::LineItemHelper
     def sync_line_items(hs_object, object_type, association_type)
       existing_ids = line_item_ids_for_associated_object(hs_object[:id], object_type)
 
+      raise "Missing args or args[:items]" if args.nil? || args[:items].nil?
+
+      if existing_ids.blank?
+        args[:items].each do |item|
+          create_line_item(item, hs_object[:id], object_type, association_type)
+        end
+        return
+      end
+
       args[:items].each do |item|
         create_or_update_line_item(item, existing_ids, hs_object[:id], object_type, association_type)
       end
@@ -22,12 +31,11 @@ module Netsuite::Hubspot::LineItemHelper
         if object_present_with_id?(hs_line_item)
           update_line_item(hs_line_item[:id], item)
         else
-          new_item = create_line_item(item)
-          associate_line_item(new_item[:id], object_id, object_type, association_type)
+          create_line_item(item, object_id, object_type, association_type)
         end
       end
 
-      def create_line_item(item)
+      def create_line_item(item, object_id, object_type, association_type)
         payload = line_item_payload(item)
         hs_line_item = Hubspot::LineItem.create(payload)
 
@@ -36,7 +44,7 @@ module Netsuite::Hubspot::LineItemHelper
         end
 
         Rails.logger.info "************** Create Hubspot Line Item with ID #{hs_line_item[:id]}"
-        hs_line_item
+        associate_line_item(hs_line_item[:id], object_id, object_type, association_type)
       end
 
       def find_line_item(item, existing_ids)
@@ -65,7 +73,7 @@ module Netsuite::Hubspot::LineItemHelper
         {
           "properties": {
             "quantity": item[:quantity],
-            "price": item[:rate],
+            "price": item[:amount],
             "description": item[:description],
             "netsuite_item_id": item[:itemId]
           }
@@ -88,7 +96,7 @@ module Netsuite::Hubspot::LineItemHelper
 
         return [] unless line_items.present? && line_items.is_a?(Array)
 
-        line_items.map { |item| item[:toObjectId].to_s }
+        line_items.map { |item| item["toObjectId"].to_s }
       end
 
       def remove_line_item_association(hs_item_id, from_object_id, from_object_type)

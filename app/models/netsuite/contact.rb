@@ -14,7 +14,7 @@ module Netsuite
     def self.find_by(args = {})
       client = Netsuite::Client.new(args)
       contact = client.search_contact_by_properties
-      contact.with_indifferent_access
+      contact&.with_indifferent_access
     end
   end
 end

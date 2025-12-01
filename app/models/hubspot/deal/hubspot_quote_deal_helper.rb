@@ -26,7 +26,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
           "name": "Product ABC",
           "quantity": "1",
           "price": "500",
-          "netsuite_item_id": "123"
+          "netsuite_item_id": "2266"
         }
       }
     end
