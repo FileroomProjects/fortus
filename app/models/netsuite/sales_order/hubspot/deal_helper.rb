@@ -1,69 +1,49 @@
 module Netsuite::SalesOrder::Hubspot::DealHelper
   extend ActiveSupport::Concern
 
+  include Netsuite::Hubspot::DealHelper
+
   included do
-    def find_deal(operator, log_label)
-      payload = build_search_payload(operator)
-      hs_deal = Hubspot::Deal.search(payload)
-      if hs_deal.present? && hs_deal[:id].present?
-        Rails.logger.info "************** Hubspot #{log_label} deal found ID #{hs_deal[:id]}"
-        hs_deal
-      else
-        raise "Hubspot #{log_label} deal not found"
-      end
+    def find_hubspot_deal(operator)
+      filters = build_filters(operator)
+      find_deal(filters)
     end
 
     def update_parent_and_child_deal
-      updated_parent_deal = update_deal(@hs_parent_deal[:id])
-      if updated_parent_deal.present? && updated_parent_deal[:id].present?
-        Rails.logger.info "************** Updated Hubspot Parent Deal with ID #{updated_parent_deal[:id]}"
-      else
-        raise "Failed to update Hubspot Parent Deal"
-      end
-      updated_child_deal = update_deal(@hs_child_deal[:id])
-      if updated_child_deal.present? && updated_child_deal[:id].present?
-        Rails.logger.info "************** Updated Hubspot Child Deal with ID #{updated_child_deal[:id]}"
-      else
-        raise "Failed to update Hubspot Child Deal"
-      end
+      update_hubspot_deal(@hs_parent_deal[:id])
+      update_hubspot_deal(@hs_parent_deal[:id])
+    end
+
+    def update_parent_deal
+      payload = payload_to_update_parent_deal(@hs_parent_deal[:id])
+      update_deal(payload)
     end
 
     private
-      def update_deal(deal_id)
-        body = payload_for_update_deal(deal_id)
-        @client = Hubspot::Client.new(body: body)
-
-        if deal = @client.update_deal
-          deal = deal.with_indifferent_access
-        end
-        deal
+      def update_hubspot_deal(deal_id)
+        payload = payload_to_update_deal(deal_id)
+        update_deal(payload)
       end
 
-      def build_search_payload(operator)
-        {
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName: "netsuite_opportunity_id",
-                  operator: "EQ",
-                  value: args[:opportunity][:id]
-                },
-                {
-                  propertyName: "pipeline",
-                  operator: operator,
-                  value: ENV["HUBSPOT_DEFAULT_PIPELINE"]
-                }
-              ]
-            }
-          ]
-        }
+      def build_filters(operator)
+        [
+          build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
+          build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
+        ]
       end
 
-      def payload_for_update_deal(deal_id)
+      def payload_to_update_deal(deal_id)
         {
           deal_id: deal_id,
           "dealstage": "closedwon"
+        }
+      end
+
+      def payload_to_update_parent_deal(deal_id)
+        {
+          deal_id: deal_id,
+          "hs_latest_approval_status": args[:opportunity][:status],
+          "amount": args[:opportunity][:total]
         }
       end
   end

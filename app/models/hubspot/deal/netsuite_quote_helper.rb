@@ -28,7 +28,7 @@ module Hubspot::Deal::NetsuiteQuoteHelper
       payload = prepare_payload_for_netsuite_quote
       ns_quote = Netsuite::Quote.create(payload)
 
-      unless ns_quote && ns_quote[:id].present?
+      unless object_present_with_id?(ns_quote)
         raise "Failed to create Netsuite estimate"
       end
 

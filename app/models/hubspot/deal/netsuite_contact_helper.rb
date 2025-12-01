@@ -18,7 +18,7 @@ module Hubspot::Deal::NetsuiteContactHelper
 
       return if ns_contact == "found by netsuite_contact_id" # No need to update hubspot contact
 
-      update_hubspot_contact(hs_contact_details, ns_contact) if ns_contact[:id].present?
+      update_hubspot_contact(hs_contact_details, ns_contact) if object_present_with_id?(ns_contact)
     end
 
     private

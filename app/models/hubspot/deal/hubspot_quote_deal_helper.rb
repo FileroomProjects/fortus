@@ -25,14 +25,16 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         "properties": {
           "name": "Product ABC",
           "quantity": "1",
-          "price": "500"
+          "price": "500",
+          "netsuite_item_id": "2266"
         }
       }
     end
 
     private
       def find_quote_deal(ns_quote_id)
-        payload = quote_deal_search_payload(ns_quote_id)
+        filters = deal_filters(ns_quote_id)
+        payload = build_search_payload(filters)
         hs_deal = Hubspot::Deal.search(payload)
 
         return nil unless hs_deal&.dig(:id).present?
@@ -65,25 +67,11 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         }
       end
 
-      def quote_deal_search_payload(ns_quote_id)
-        {
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName: "netsuite_quote_id",
-                  operator: "EQ",
-                  value: ns_quote_id
-                },
-                {
-                  propertyName: "pipeline",
-                  operator: "EQ",
-                  value: ENV["HUBSPOT_DEFAULT_PIPELINE"]
-                }
-              ]
-            }
-          ]
-        }
+      def deal_filters(ns_quote_id)
+        [
+          build_search_filter("netsuite_quote_id", "EQ", ns_quote_id),
+          build_search_filter("pipeline", "EQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+        ]
       end
 
       def netsuite_estimate_location(ns_quote_id)

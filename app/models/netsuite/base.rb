@@ -1,20 +1,19 @@
 module Netsuite
   class Base
-    BASE_URL = "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1"
     require "ostruct"
 
     include HTTParty
+    include IntegrationCommon
 
-    attr_accessor :args, :properties
+    attr_accessor :args
 
     def initialize(params)
       @args = params.as_json.with_indifferent_access
     end
 
     # Exchange authorization code for access token and store it
+    # Called during initial OAuth2 authentication flow
     def self.exchange_code_for_token(code)
-      token_url = "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token"
-
       response = HTTParty.post(token_url, {
         body: {
           grant_type: "authorization_code",
@@ -23,28 +22,25 @@ module Netsuite
           client_id: ENV["NETSUITE_CLIENT_ID"],
           client_secret: ENV["NETSUITE_CLIENT_SECRET"]
         },
-        headers: {
-          "Content-Type" => "application/x-www-form-urlencoded",
-          "Accept" => "application/json"
-        }
+        headers: headers
       })
-      if response.success?
-        token_data = response.parsed_response
 
-        # Store access token in database
-        Token.update_netsuite_token(
-          access_token: token_data["access_token"],
-          refresh_token: token_data["refresh_token"],
-          expires_in: token_data["expires_in"]
-        )
+      raise "Token exchange failed: #{response.body}" unless response.success?
 
-        token_data
-      else
-        raise "Token exchange failed: #{response.body}"
-      end
+      token_data = response.parsed_response
+
+      # Store access token in database
+      Token.update_netsuite_token(
+        access_token: token_data["access_token"],
+        refresh_token: token_data["refresh_token"],
+        expires_in: token_data["expires_in"]
+      )
+
+      token_data
     end
 
     # Get current access token (refreshes if expired)
+    # Automatically refreshes token if it has expired or is about to expire (< 5 minutes)
     def self.get_access_token
       token_record = Token.last
       return nil unless token_record&.access_token
@@ -59,26 +55,22 @@ module Netsuite
     end
 
     private
+      def self.refresh_access_token
+        token_record = Token.netsuite_token
+        # return unless token_record&.refresh_token
 
-    def self.refresh_access_token
-      token_record = Token.netsuite_token
-      # return unless token_record&.refresh_token
-      token_url = "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token"
+        response = HTTParty.post(token_url, {
+          body: {
+            grant_type: "refresh_token",
+            refresh_token: token_record.refresh_token,
+            client_id: ENV["NETSUITE_CLIENT_ID"],
+            client_secret: ENV["NETSUITE_CLIENT_SECRET"]
+          },
+          headers: headers
+        })
 
-      response = HTTParty.post(token_url, {
-        body: {
-          grant_type: "refresh_token",
-          refresh_token: token_record.refresh_token,
-          client_id: ENV["NETSUITE_CLIENT_ID"],
-          client_secret: ENV["NETSUITE_CLIENT_SECRET"]
-        },
-        headers: {
-          "Content-Type" => "application/x-www-form-urlencoded",
-          "Accept" => "application/json"
-        }
-      })
+        raise "Token refresh failed: #{response.body}" unless response.success?
 
-      if response.success?
         token_data = response.parsed_response
 
         # Update existing token record
@@ -89,9 +81,17 @@ module Netsuite
         )
 
         token_data
-      else
-        raise "Token refresh failed: #{response.body}"
       end
-    end
+
+      def self.token_url
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token"
+      end
+
+      def self.headers
+        {
+          "Content-Type" => "application/x-www-form-urlencoded",
+          "Accept" => "application/json"
+        }
+      end
   end
 end

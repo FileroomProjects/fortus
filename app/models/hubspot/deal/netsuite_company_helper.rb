@@ -17,7 +17,7 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
       return if ns_customer == "found by netsuite_company_id" # No need to update hubspot company
 
-      update_hubspot_company(hs_company_details, ns_customer) if ns_customer[:id].present?
+      update_hubspot_company(hs_company_details, ns_customer) if object_present_with_id?(ns_customer)
     end
 
     private
