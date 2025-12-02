@@ -7,11 +7,11 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
       return if hs_deal&.dig(:id).present?
 
-      hs_quote_deal = create_and_update_hubspot_quote_deal(ns_quote)
+      hs_quote_deal = create_hubspot_quote_deal(ns_quote)
       association_for_deal(hs_quote_deal[:id], deal_id)
     end
 
-    def create_and_update_hubspot_quote_deal(ns_quote)
+    def create_hubspot_quote_deal(ns_quote)
       payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
       hs_quote_deal = Hubspot::QuoteDeal.create(payload)
 
@@ -19,6 +19,17 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
       Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
       hs_quote_deal
+    end
+
+    def find_parent_deal
+      filters = deal_filters("NEQ")
+      payload = build_search_payload(filters)
+      hs_deal = Hubspot::Deal.search(payload)
+
+      raise "Hubspot parent deal not found" unless object_present_with_id?(hs_deal)
+
+      Rails.logger.info "************** Hubspot parent deal found ID #{hs_deal[:id]}"
+      hs_deal
     end
 
     def line_item_payload
@@ -43,7 +54,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
     private
       def find_quote_deal(ns_quote_id)
-        filters = deal_filters(ns_quote_id)
+        filters = deal_filters("EQ")
         payload = build_search_payload(filters)
         hs_deal = Hubspot::Deal.search(payload)
 
@@ -69,10 +80,10 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         }
       end
 
-      def deal_filters(ns_quote_id)
+      def deal_filters(operator)
         [
-          build_search_filter("netsuite_quote_id", "EQ", ns_quote_id),
-          build_search_filter("pipeline", "EQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("netsuite_opportunity_id", "EQ", @netsuite_opportunity_id),
+          build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
         ]
       end
 

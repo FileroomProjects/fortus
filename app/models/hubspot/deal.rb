@@ -51,7 +51,8 @@ module Hubspot
     def self.find_by(args)
       client = Hubspot::Client.new(body: args)
 
-      client.fetch_deal
+      deal = client.fetch_deal
+      deal&.with_indifferent_access
     end
 
     def sync_contact_customer_with_netsuite

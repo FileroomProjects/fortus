@@ -45,6 +45,14 @@ module Netsuite
       { id: object_id }
     end
 
+    def fetch_estimate_items(estimate_id)
+      response = get_request("#{BASE_URL}/estimate/#{estimate_id}?expandSubResources=true", headers)
+
+      handle_error("estimate", response) unless response.code == 200
+
+      JSON.parse(response.parsed_response)
+    end
+
     private
       def search_contact(query_str)
         response = search_query("#{BASE_URL}/contact", { q: query_str, limit: 1, offset: 0 }, headers)
