@@ -1,8 +1,26 @@
-development:
+
+default: &default
   adapter: postgresql
-  host: localhost
-  database: fortus_dev
-  username: postgres
-  password: root
-  pool: 40
+  encoding: unicode
+  # host: localhost 
+  pool: 5
   timeout: 5000
+
+development:
+  <<: *default
+  database: fortus_dev
+
+production:
+  primary:
+    <<: *default
+    url: <%= ENV['DATABASE_URL'] %>
+
+  cable:
+      url: <%= ENV['DATABASE_URL'] %>
+      pool: 5
+  queue:
+      url: <%= ENV['DATABASE_URL'] %>
+      pool: 5
+  cache:
+      url: <%= ENV['DATABASE_URL'] %>
+      pool: 5

@@ -2,8 +2,10 @@ Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # NetSuite OAuth2 callback route
-  get 'netsuite/callback', to: 'netsuite#callback'
-
+  get "netsuite/callback", to: "netsuite#callback"
+  post "netsuite/sync_order", to: "netsuite#sync_order"
+  post "netsuite/sync_estimate", to: "netsuite#sync_estimate"
+  post "netsuite/sync_deal", to: "netsuite#sync_deal"
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -14,4 +16,8 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "home#index"
+  resource :hubspot, only: [] do
+    post :callback
+    post :create_contact_customer
+  end
 end
