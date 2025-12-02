@@ -9,8 +9,7 @@ module Hubspot::Deal::NetsuiteQuoteHelper
     def find_or_create_netsuit_quote
       netsuite_quote_id = fetch_prop_field(:netsuite_quote_id)
       if netsuite_quote_id.blank?
-        payload = prepare_payload_for_netsuite_quote
-        ns_quote = create_netsuite_quote_estimate_and_update_hubspot_deal(payload)
+        ns_quote = create_netsuite_quote_estimate_and_update_hubspot_deal
         return ns_quote
       end
 
@@ -19,12 +18,12 @@ module Hubspot::Deal::NetsuiteQuoteHelper
         Rails.logger.info "************** Netsuite estimate already exists with ID #{ns_quote[:id]}"
         ns_quote
       else
-        payload = prepare_payload_for_netsuite_quote
-        create_netsuite_quote_estimate_and_update_hubspot_deal(payload)
+        create_netsuite_quote_estimate_and_update_hubspot_deal
       end
     end
 
-    def create_netsuite_quote_estimate_and_update_hubspot_deal(payload)
+    def create_netsuite_quote_estimate_and_update_hubspot_deal
+      payload = prepare_payload_for_netsuite_quote
       ns_quote = create_netsuite_quote_estimate(payload)
 
       Rails.logger.info "************** Updating Hubspot deal with netsuite_quote_id #{ns_quote[:id]}"
