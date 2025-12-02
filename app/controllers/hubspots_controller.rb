@@ -12,6 +12,10 @@ class HubspotsController < ApplicationController
     @hs_deal = Hubspot::Deal.find_by(deal_id: deal_id)
     @hubspot = Hubspot::Deal.new(@hs_deal)
     @ns_quote = @hubspot.create_netsuite_quote_estimate_and_update_hubspot_deal
-    find_or_create_hubspot_child_deal(@ns_quote)
+    @hs_deal_child = @hubspot.create_and_update_hubspot_quote_deal(@ns_quote)
+    @hubspot.association_for_deal(@hs_deal_child[:id], deal_id)
+    respond_to do |format|
+      format.html { render :create_ns_quote }
+    end
   end
 end

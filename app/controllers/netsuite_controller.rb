@@ -69,10 +69,10 @@ class NetsuiteController < ApplicationController
     def render_failure(alert_message, error_message)
       respond_to do |format|
         format.html do
-          flash[:alert] = "NetSuite authentication failed: #{e.message}"
+          flash[:alert] = "NetSuite authentication failed: #{error_message}"
           redirect_to root_path
         end
-        format.json { render json: { error: "Authentication failed", message: e.message }, status: :internal_server_error }
+        format.json { render json: { error: "Authentication failed", message: error_message }, status: :internal_server_error }
       end
     end
 end
