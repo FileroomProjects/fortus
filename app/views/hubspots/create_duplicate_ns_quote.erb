@@ -1,8 +1,5 @@
-
-<h1>NS Quote Created Successfully</h1>
-
-<div>
-  <p><strong>Parent Deal ID:</strong> <%= @parent_deal[:id] %></p>
-  <p><strong>Deal ID:</strong> <%= @hs_deal_child[:id] %></p>
-  <p><strong>NS Quote ID:</strong> <%= @ns_quote[:id] %></p>
-</div>
+<%= render "quote_summary",
+      title: "NS Quote Created Successfully with child deal",
+      parent_id: @parent_deal[:id],
+      deal_id: @hs_deal_child[:id],
+      ns_quote_id: @ns_quote[:id] %>

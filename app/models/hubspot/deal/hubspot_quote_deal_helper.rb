@@ -12,23 +12,11 @@ module Hubspot::Deal::HubspotQuoteDealHelper
     end
 
     def create_hubspot_quote_deal(ns_quote)
-      payload = prepare_payload_for_netsuite_quote_deal(ns_quote[:id])
-      hs_quote_deal = Hubspot::QuoteDeal.create(payload)
-
-      return unless hs_quote_deal&.dig(:id).present?
-
-      Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
-      hs_quote_deal
+      create_quote_deal_with(:regular, ns_quote)
     end
 
     def create_duplicate_hubspot_quote_deal(ns_quote)
-      payload = prepare_payload_for_duplicate_netsuite_quote_deal(ns_quote[:id])
-      hs_quote_deal = Hubspot::QuoteDeal.create(payload)
-
-      return unless hs_quote_deal&.dig(:id).present?
-
-      Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
-      hs_quote_deal
+      create_quote_deal_with(:duplicate, ns_quote)
     end
 
     def find_parent_deal
@@ -74,26 +62,22 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         hs_deal
       end
 
-      def prepare_payload_for_netsuite_quote_deal(ns_quote_id)
-        {
-          "properties": {
-            "dealname": "#{ns_quote_id} #{fetch_prop_field(:dealname)}",
-            "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
-            "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
-            "netsuite_quote_id": ns_quote_id,
-            "amount": fetch_prop_field(:amount),
-            "netsuite_location": netsuite_estimate_location(ns_quote_id),
-            "netsuite_origin": "netsuite",
-            "netsuite_opportunity_id": @netsuite_opportunity_id,
-            "is_child": "true"
-          }
-        }
+      def create_quote_deal_with(type, ns_quote)
+        payload = quote_deal_payload(type, ns_quote[:id])
+        hs_quote_deal = Hubspot::QuoteDeal.create(payload)
+
+        return unless hs_quote_deal&.dig(:id).present?
+
+        Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
+        hs_quote_deal
       end
 
-      def prepare_payload_for_duplicate_netsuite_quote_deal(ns_quote_id)
+      def quote_deal_payload(type, ns_quote_id)
+        dealname = build_dealname(type, ns_quote_id)
+
         {
           "properties": {
-            "dealname": "#{ns_quote_id} #{fetch_prop_field(:dealname).split(' ', 2)[1]}",
+            "dealname": dealname,
             "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
             "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
             "netsuite_quote_id": ns_quote_id,
@@ -115,6 +99,18 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
       def netsuite_estimate_location(ns_quote_id)
         "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_quote_id}&whence="
+      end
+
+      def build_dealname(type, ns_quote_id)
+        base_dealname = fetch_prop_field(:dealname)
+
+        case type
+        when :regular
+          "#{ns_quote_id} #{base_dealname}"
+        when :duplicate
+          suffix = base_dealname.split(" ", 2)[1]
+          "#{ns_quote_id} #{suffix}"
+        end
       end
   end
 end
