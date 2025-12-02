@@ -3,6 +3,12 @@ module Netsuite::Quote::Hubspot::DealHelper
 
   include Netsuite::Hubspot::DealHelper
 
+  STATUS_TO_STAGE_ID = {
+    "Open" => 1979552193,
+    "Closed won" => 1979552198,
+    "Closed Lost" => 1979552199
+  }.freeze
+
   included do
     def update_hubspot_quote_deal
       hs_deal = find_deal(deal_search_filter)
@@ -22,10 +28,9 @@ module Netsuite::Quote::Hubspot::DealHelper
         {
           deal_id: hs_deal[:id],
           "amount": args[:total],
-          "dealname": args[:title],
-          # "terms": args[:terms],
-          # "contact_display": args[:custbodyPhoneNumber],
-          # "hs_latest_approval_status": args[:status]
+          "description": args[:terms],
+          "dealstage": STATUS_TO_STAGE_ID[args[:status]],
+          "dealname": args[:title]
         }
       end
   end
