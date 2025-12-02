@@ -24,7 +24,6 @@ module Hubspot::Deal::NetsuiteQuoteHelper
 
     def create_netsuite_quote_estimate_and_update_hubspot_deal
       Rails.logger.info "************** Creating Netsuite estimate"
-
       payload = prepare_payload_for_netsuite_quote
       ns_quote = Netsuite::Quote.create(payload)
 
