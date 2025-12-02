@@ -21,6 +21,16 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       hs_quote_deal
     end
 
+    def create_duplicate_hubspot_quote_deal(ns_quote)
+      payload = prepare_payload_for_duplicate_netsuite_quote_deal(ns_quote[:id])
+      hs_quote_deal = Hubspot::QuoteDeal.create(payload)
+
+      return unless hs_quote_deal&.dig(:id).present?
+
+      Rails.logger.info "************** Created Hubspot Quote Deal with ID #{hs_quote_deal[:id]}"
+      hs_quote_deal
+    end
+
     def find_parent_deal
       filters = deal_filters("NEQ")
       payload = build_search_payload(filters)
@@ -68,6 +78,22 @@ module Hubspot::Deal::HubspotQuoteDealHelper
         {
           "properties": {
             "dealname": "#{ns_quote_id} #{fetch_prop_field(:dealname)}",
+            "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
+            "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
+            "netsuite_quote_id": ns_quote_id,
+            "amount": fetch_prop_field(:amount),
+            "netsuite_location": netsuite_estimate_location(ns_quote_id),
+            "netsuite_origin": "netsuite",
+            "netsuite_opportunity_id": @netsuite_opportunity_id,
+            "is_child": "true"
+          }
+        }
+      end
+
+      def prepare_payload_for_duplicate_netsuite_quote_deal(ns_quote_id)
+        {
+          "properties": {
+            "dealname": "#{ns_quote_id} #{fetch_prop_field(:dealname).split(' ', 2)[1]}",
             "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
             "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
             "netsuite_quote_id": ns_quote_id,

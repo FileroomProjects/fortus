@@ -26,7 +26,7 @@ class HubspotsController < ApplicationController
     @hubspot = Hubspot::Deal.new(@hs_deal)
     payload = @hubspot.prepare_payload_for_duplicate_netsuite_quote
     @ns_quote = @hubspot.create_netsuite_quote_estimate(payload)
-    @hs_deal_child = @hubspot.create_hubspot_quote_deal(@ns_quote)
+    @hs_deal_child = @hubspot.create_duplicate_hubspot_quote_deal(@ns_quote)
     @parent_deal = @hubspot.find_parent_deal
     @hubspot.association_for_deal(@hs_deal_child[:id], @parent_deal[:id])
     respond_to do |format|
