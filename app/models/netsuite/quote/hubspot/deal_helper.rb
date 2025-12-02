@@ -21,7 +21,8 @@ module Netsuite::Quote::Hubspot::DealHelper
       def payload_to_update_deal(hs_deal)
         {
           deal_id: hs_deal[:id],
-          "amount": args[:total]
+          "amount": args[:total],
+          "dealname": args[:title],
           # "terms": args[:terms],
           # "contact_display": args[:custbodyPhoneNumber],
           # "hs_latest_approval_status": args[:status]
