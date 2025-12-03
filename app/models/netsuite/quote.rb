@@ -14,11 +14,18 @@ module Netsuite
       quote&.with_indifferent_access
     end
 
+    def self.fetch_items(ns_quote_id)
+      client = Netsuite::Client.new({})
+      expanded = client.fetch_estimate_items(ns_quote_id)
+      items = expanded.dig("item", "items")
+      { "items" => items }
+    end
+
     def sync_quote_estimate_with_quote_deal
       updated_hs_deal = update_hubspot_quote_deal
       sync_line_items_in_hubspot_quote_deal(updated_hs_deal)
       update_company_info
-      # update_contact_info
+      update_contact_info
     end
   end
 end

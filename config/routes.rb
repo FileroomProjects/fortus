@@ -19,5 +19,7 @@ Rails.application.routes.draw do
   resource :hubspot, only: [] do
     post :callback
     post :create_contact_customer
+    get :create_ns_quote
+    get :create_duplicate_ns_quote
   end
 end

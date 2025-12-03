@@ -24,7 +24,7 @@ module Netsuite::Quote::Hubspot::ContactHelper
           "lastname": args[:contact][:lastName],
           "email": args[:contact][:email],
           "jobtitle":  args[:contact][:jobTitle],
-          "phone": args[:contact][:mobilePhone]
+          "phone": args[:contact][:phone]
         }
       end
   end

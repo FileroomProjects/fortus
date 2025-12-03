@@ -7,7 +7,7 @@ module Hubspot
     def initialize(params)
       @args = params.as_json.with_indifferent_access
       @properties = @args[:properties] rescue {}
-      @deal_id = @args[:objectId]
+      @deal_id = @args[:objectId] || @args[:deal_id] || @args[:dealId]
       @netsuite_opportunity_id = (fetch_prop_field(:netsuite_opportunity_id) rescue nil)
     end
   end

@@ -14,7 +14,7 @@ module Hubspot
 
       handle_error(response) unless response.code == 200
 
-      response.parsed_response["results"]&.first
+      response.parsed_response
     end
 
     def fetch_company
