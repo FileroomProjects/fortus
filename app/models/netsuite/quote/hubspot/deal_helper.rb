@@ -30,7 +30,7 @@ module Netsuite::Quote::Hubspot::DealHelper
           "amount": args[:total],
           "description": args[:terms],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
-          "dealname": args[:title]
+          "dealname": "#{args[:estimateId]} #{args[:title]}"
         }
       end
   end
