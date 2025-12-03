@@ -51,7 +51,6 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
       def build_update_properties(hs_order_id)
         sales_order = args[:sales_order]
         {
-          "hs_order_name": sales_order[:title],
           order_id: hs_order_id,
           "hs_order_name": sales_order[:title],
           "hs_external_order_status": sales_order[:orderStatus],
