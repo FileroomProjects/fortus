@@ -18,7 +18,7 @@ module Netsuite
       client = Netsuite::Client.new({})
       expanded = client.fetch_estimate_items(ns_quote_id)
       items = expanded.dig("item", "items")
-      { "items" => items }
+      { "items" => items }&.with_indifferent_access
     end
 
     def sync_quote_estimate_with_quote_deal

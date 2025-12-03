@@ -41,6 +41,6 @@ class HubspotsController < ApplicationController
       payload = @hubspot.send(payload_method)
       @ns_quote = @hubspot.create_netsuite_quote_estimate(payload)
       @hs_deal_child = @hubspot.send(create_deal_method, @ns_quote)
-      @hubspot.association_for_deal(@hs_deal_child[:id], parent_deal_id)
+      @hubspot.association_for_deal(@hs_deal_child[:id], parent_deal_id, @ns_quote[:id])
     end
 end
