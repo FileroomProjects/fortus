@@ -4,9 +4,8 @@ module Netsuite::Quote::Hubspot::DealHelper
   include Netsuite::Hubspot::DealHelper
 
   STATUS_TO_STAGE_ID = {
-    "Open" => 1979552193,
-    "Closed won" => 1979552198,
-    "Closed Lost" => 1979552199
+    "10" => 1979552193, # Open
+    "14" => 1979552199 # Closed Lost
   }.freeze
 
 
@@ -52,7 +51,7 @@ module Netsuite::Quote::Hubspot::DealHelper
         {
           deal_id: hs_deal[:id],
           "amount": args[:total],
-          "description": args[:terms],
+          # "description": args[:terms],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
           "dealname": "#{args[:estimateId]} #{args[:title]}"
         }
@@ -70,7 +69,7 @@ module Netsuite::Quote::Hubspot::DealHelper
           "dealname": "#{args[:estimateId]} #{args[:title]}",
           "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
-          "description": args[:terms],
+          # "description": args[:terms],
           "netsuite_quote_id": args[:estimateId],
           "amount": args[:total],
           "netsuite_location": netsuite_estimate_location(args[:estimateId]),

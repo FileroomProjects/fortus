@@ -53,7 +53,7 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
         {
           order_id: hs_order_id,
           "hs_order_name": sales_order[:title],
-          "hs_external_order_status": sales_order[:orderStatus],
+          "hs_external_order_status": sales_order[:status],
           "hs_total_price": sales_order[:total],
           # "blank": sales_order[:shipDate],
           "hs_external_created_date": sales_order[:tranDate],
