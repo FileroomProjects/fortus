@@ -11,12 +11,6 @@ module Hubspot
       @ns_quote_id = ns_quote_id
     end
 
-    def self.create(args = {})
-      client = Hubspot::Client.new(body: args)
-      quote_deal = client.create_objects("deals")
-      quote_deal&.with_indifferent_access
-    end
-
     def associate_company
       hs_company_id = Hubspot::Company.find_by_deal_id(hs_parent_deal_id)[:toObjectId]
       body = payload_to_associate(hs_deal_id, hs_company_id, "deal_to_company")
