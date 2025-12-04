@@ -53,7 +53,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
       def create_quote_deal_with(type, ns_quote)
         payload = quote_deal_payload(type, ns_quote[:id])
-        hs_quote_deal = Hubspot::QuoteDeal.create(payload)
+        hs_quote_deal = Hubspot::Deal.create(payload)
 
         return unless hs_quote_deal&.dig(:id).present?
 
@@ -84,10 +84,6 @@ module Hubspot::Deal::HubspotQuoteDealHelper
           build_search_filter("netsuite_opportunity_id", "EQ", @netsuite_opportunity_id),
           build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
         ]
-      end
-
-      def netsuite_estimate_location(ns_quote_id)
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_quote_id}&whence="
       end
 
       def build_dealname(type, ns_quote_id)

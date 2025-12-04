@@ -4,9 +4,12 @@ module Netsuite::Quote::Hubspot::CompanyHelper
   include Netsuite::Hubspot::CompanyHelper
 
   included do
+    def find_hubspot_company
+      find_company(company_filters)
+    end
+
     def update_company_info
-      hs_company = find_company(company_filters)
-      payload = payload_to_update_hubspot_company(hs_company[:id])
+      payload = payload_to_update_hubspot_company(@hs_company[:id])
       update_company(payload)
     end
 
