@@ -22,16 +22,14 @@ module Netsuite
     end
 
     def sync_quote_estimate_with_quote_deal
-      find_associated_hubspot_records
-      hs_deal = find_or_create_hubspot_child_deal
+      update_or_create_associated_hubspot_records
+      hs_deal = update_or_create_hubspot_child_deal
       sync_line_items_in_hubspot_quote_deal(hs_deal)
-      update_company_info
-      update_contact_info
     end
 
-    def find_associated_hubspot_records
-      @hs_contact = find_hubspot_contact
-      @hs_company = find_hubspot_company
+    def update_or_create_associated_hubspot_records
+      @hs_contact = update_or_create_hubspot_contact
+      @hs_company = update_or_create_hubspot_company
     end
   end
 end

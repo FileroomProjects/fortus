@@ -4,13 +4,25 @@ module Netsuite::Quote::Hubspot::CompanyHelper
   include Netsuite::Hubspot::CompanyHelper
 
   included do
-    def find_hubspot_company
-      find_company(company_filters)
+    def update_or_create_hubspot_company
+      return nil unless args[:customer][:id].present?
+
+      hs_company = find_company(company_filters, raise_error: false)
+      if object_present_with_id?(hs_company)
+        update_hubspot_company(hs_company)
+      else
+        create_hubspot_company
+      end
     end
 
-    def update_company_info
-      payload = payload_to_update_hubspot_company(@hs_company[:id])
+    def update_hubspot_company(hs_company)
+      payload = payload_to_update_hubspot_company(hs_company[:id])
       update_company(payload)
+    end
+
+    def create_hubspot_company
+      payload = payload_to_create_hubspot_company
+      create_company(payload)
     end
 
     private
@@ -24,6 +36,15 @@ module Netsuite::Quote::Hubspot::CompanyHelper
         {
           companyId: hs_company_id,
           "name": args[:customer][:name]
+        }
+      end
+
+      def payload_to_create_hubspot_company
+        {
+          "properties": {
+            "name": args[:customer][:name],
+            "netsuite_company_id": args[:customer][:id]
+          }
         }
       end
   end

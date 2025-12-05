@@ -14,7 +14,7 @@ module Netsuite::Quote::Hubspot::DealHelper
   DEAL_TO_DEAL = 451
 
   included do
-    def find_or_create_hubspot_child_deal
+    def update_or_create_hubspot_child_deal
       existing_deal = find_hubspot_quote_deal
 
       return update_hubspot_quote_deal(existing_deal) if object_present_with_id?(existing_deal)

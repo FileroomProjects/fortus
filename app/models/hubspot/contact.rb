@@ -32,6 +32,12 @@ module Hubspot
       contact&.with_indifferent_access
     end
 
+    def self.create(args = {})
+      client = Hubspot::Client.new(body: args)
+      contact = client.create_objects("contacts")
+      contact&.with_indifferent_access
+    end
+
     private
       def self.selected_contact(contacts)
         primary_contact = contacts.find do |contact|
