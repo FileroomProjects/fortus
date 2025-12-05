@@ -8,7 +8,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       return if hs_deal&.dig(:id).present?
 
       hs_quote_deal = create_hubspot_quote_deal(ns_quote)
-      association_for_deal(hs_quote_deal[:id], deal_id)
+      association_for_deal(hs_quote_deal[:id], deal_id, ns_quote[:id])
     end
 
     def create_hubspot_quote_deal(ns_quote)
@@ -30,20 +30,9 @@ module Hubspot::Deal::HubspotQuoteDealHelper
       hs_deal
     end
 
-    def line_item_payload
-      {
-        "properties": {
-          "name": "Product ABC",
-          "quantity": "1",
-          "price": "500",
-          "netsuite_item_id": "2266"
-        }
-      }
-    end
-
-    def association_for_deal(hs_quote_deal_id, parent_deal_id)
+    def association_for_deal(hs_quote_deal_id, parent_deal_id, ns_quote_id)
       Rails.logger.info "************** Associating Quote Deal with Company, Contact, Parent Deal and Line Item"
-      hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, parent_deal_id)
+      hs_quote_deal = Hubspot::QuoteDeal.new(hs_quote_deal_id, parent_deal_id, ns_quote_id)
       hs_quote_deal.associate_company
       hs_quote_deal.associate_contact
       hs_quote_deal.associate_parent_deal
@@ -64,7 +53,7 @@ module Hubspot::Deal::HubspotQuoteDealHelper
 
       def create_quote_deal_with(type, ns_quote)
         payload = quote_deal_payload(type, ns_quote[:id])
-        hs_quote_deal = Hubspot::QuoteDeal.create(payload)
+        hs_quote_deal = Hubspot::Deal.create(payload)
 
         return unless hs_quote_deal&.dig(:id).present?
 
@@ -95,10 +84,6 @@ module Hubspot::Deal::HubspotQuoteDealHelper
           build_search_filter("netsuite_opportunity_id", "EQ", @netsuite_opportunity_id),
           build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
         ]
-      end
-
-      def netsuite_estimate_location(ns_quote_id)
-        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_quote_id}&whence="
       end
 
       def build_dealname(type, ns_quote_id)

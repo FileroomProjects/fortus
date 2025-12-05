@@ -5,11 +5,12 @@ module Netsuite::SalesOrder::Hubspot::CompanyHelper
 
   included do
     def find_hubspot_company
+      filters = company_search_filters
       find_company(filters)
     end
 
     private
-      def filters
+      def company_search_filters
         [ build_search_filter("netsuite_company_id", "EQ", args[:customer][:id]) ]
       end
   end

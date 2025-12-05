@@ -46,5 +46,9 @@ module IntegrationCommon
     def object_present_with_id?(object)
       object.present? && object[:id].present?
     end
+
+    def netsuite_estimate_location(ns_quote_id)
+      "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_quote_id}&whence="
+    end
   end
 end

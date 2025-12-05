@@ -4,9 +4,12 @@ module Netsuite::Quote::Hubspot::ContactHelper
   include Netsuite::Hubspot::ContactHelper
 
   included do
+    def find_hubspot_contact
+      find_contact(contact_filters)
+    end
+
     def update_contact_info
-      hs_contact = find_contact(contact_filters)
-      payload = payload_to_update_hubspot_contact(hs_contact[:id])
+      payload = payload_to_update_hubspot_contact(@hs_contact[:id])
       update_contact(payload)
     end
 

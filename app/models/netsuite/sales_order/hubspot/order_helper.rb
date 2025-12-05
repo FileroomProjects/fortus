@@ -52,11 +52,14 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
         sales_order = args[:sales_order]
         {
           order_id: hs_order_id,
-          "hs_external_order_status": sales_order[:orderStatus],
+          "hs_order_name": sales_order[:title],
+          "hs_external_order_status": sales_order[:status],
           "hs_total_price": sales_order[:total],
-          "ship_date": sales_order[:shipDate],
+          # "blank": sales_order[:shipDate],
+          "hs_external_created_date": sales_order[:tranDate],
           "hs_fulfillment_status": sales_order[:status],
-          "hs_shipping_tracking_number": sales_order[:linkedTrackingNumbers]
+          # "blank": sales_order[:deliveryDate],
+          "hs_shipping_tracking_number": sales_order[:trackingNumbers] # tracking Numbers
           # "blank": sales_order[:custbodyrsc_freight_carrier_consid],
           # "blank": sales_order[:custbodyrsc_freight_carrier_invalidadd]
         }

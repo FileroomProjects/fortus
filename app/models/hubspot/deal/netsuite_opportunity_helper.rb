@@ -49,6 +49,8 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       def prepare_payload_for_netsuite_opportunity
         {
           "title": fetch_prop_field(:dealname),
+          "custbody61": fetch_prop_field(:request_quote_notes),
+          "custbodyhubspot_opportunity_quote_note": request_quote_triggered?,
           "memo": "Test opportunity created via API new",
           "tranDate": format_timestamp(fetch_prop_field(:createdate)),
           "expectedCloseDate": format_timestamp(fetch_prop_field(:closedate)),
@@ -75,6 +77,10 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
       def format_timestamp(ms_timestamp)
         Time.at(ms_timestamp.to_i / 1000).utc.strftime("%Y-%m-%d")
+      end
+
+      def request_quote_triggered?
+        fetch_prop_field(:request_quote_triggered) == "true"
       end
   end
 end

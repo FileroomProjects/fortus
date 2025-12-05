@@ -15,6 +15,12 @@ module Hubspot
       deal&.with_indifferent_access
     end
 
+    def self.create(args = {})
+      client = Hubspot::Client.new(body: args)
+      quote_deal = client.create_objects("deals")
+      quote_deal&.with_indifferent_access
+    end
+
     def self.search(args = {})
       client = Hubspot::Client.new(body: args)
 

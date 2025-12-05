@@ -72,6 +72,7 @@ module Netsuite::Hubspot::LineItemHelper
       def line_item_payload(item)
         {
           "properties": {
+            "name": item[:itemName],
             "quantity": item[:quantity],
             "price": item[:amount],
             "description": item[:description],
