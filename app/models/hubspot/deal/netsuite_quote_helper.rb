@@ -6,31 +6,6 @@ module Hubspot::Deal::NetsuiteQuoteHelper
     NETSUITE_CASE_TYPE_ID = "6"
     NETSUITE_ORIGIN_REF_NAME  = "Opportunity "
 
-    def find_or_create_netsuit_quote
-      netsuite_quote_id = fetch_prop_field(:netsuite_quote_id)
-      if netsuite_quote_id.blank?
-        ns_quote = create_netsuite_quote_estimate_and_update_hubspot_deal
-        return ns_quote
-      end
-
-      ns_quote = Netsuite::Quote.show(netsuite_quote_id)
-      if ns_quote.present?
-        Rails.logger.info "************** Netsuite estimate already exists with ID #{ns_quote[:id]}"
-        ns_quote
-      else
-        create_netsuite_quote_estimate_and_update_hubspot_deal
-      end
-    end
-
-    def create_netsuite_quote_estimate_and_update_hubspot_deal
-      payload = prepare_payload_for_netsuite_quote
-      ns_quote = create_netsuite_quote_estimate(payload)
-
-      Rails.logger.info "************** Updating Hubspot deal with netsuite_quote_id #{ns_quote[:id]}"
-      update({ "netsuite_quote_id": ns_quote[:id] })
-      ns_quote
-    end
-
     def create_netsuite_quote_estimate(payload)
       Rails.logger.info "************** Creating Netsuite estimate"
       ns_quote = Netsuite::Quote.create(payload)
@@ -55,7 +30,7 @@ module Hubspot::Deal::NetsuiteQuoteHelper
         v.is_a?(Hash) && v.key?("links") && !v.key?("id")
       end
 
-      duplicate["item"] = fetch_items_for_duplicate(fetch_prop_field(:netsuite_quote_id))
+      duplicate["item"] = Netsuite::Quote.fetch_items(fetch_prop_field(:netsuite_quote_id))
 
       duplicate
     end
@@ -71,10 +46,6 @@ module Hubspot::Deal::NetsuiteQuoteHelper
 
       Rails.logger.info "Found netsuite estimate with id #{ns_quote[:id]}"
       ns_quote
-    end
-
-    def fetch_items_for_duplicate(estimate_id)
-      Netsuite::Quote.fetch_items(estimate_id)
     end
 
     def prepare_payload_for_netsuite_quote
