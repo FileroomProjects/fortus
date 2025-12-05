@@ -17,8 +17,8 @@ module Hubspot
 
     def self.create(args = {})
       client = Hubspot::Client.new(body: args)
-      quote_deal = client.create_objects("deals")
-      quote_deal&.with_indifferent_access
+      deal = client.create_objects("deals")
+      deal&.with_indifferent_access
     end
 
     def self.search(args = {})
@@ -66,15 +66,7 @@ module Hubspot
 
       handle_contact_and_update_hubspot
 
-      sync_quotes_and_opportunity_with_netsuite
-    end
-
-    def sync_quotes_and_opportunity_with_netsuite
       find_or_create_netsuite_opportunity
-
-      ns_quote = find_or_create_netsuit_quote if @netsuite_opportunity_id.present?
-
-      find_or_create_hubspot_child_deal(ns_quote)
     end
 
     def fetch_prop_field(field_name)

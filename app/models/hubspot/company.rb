@@ -41,6 +41,12 @@ module Hubspot
       company&.with_indifferent_access
     end
 
+    def self.create(args = {})
+      client = Hubspot::Client.new(body: args)
+      company = client.create_objects("companies")
+      company&.with_indifferent_access
+    end
+
     private
       def self.primary_company(companies)
         return unless companies.present?

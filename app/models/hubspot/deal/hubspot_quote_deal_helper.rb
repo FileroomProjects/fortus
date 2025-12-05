@@ -2,15 +2,6 @@ module Hubspot::Deal::HubspotQuoteDealHelper
   extend ActiveSupport::Concern
 
   included do
-    def find_or_create_hubspot_child_deal(ns_quote)
-      hs_deal = find_quote_deal(ns_quote[:id])
-
-      return if hs_deal&.dig(:id).present?
-
-      hs_quote_deal = create_hubspot_quote_deal(ns_quote)
-      association_for_deal(hs_quote_deal[:id], deal_id, ns_quote[:id])
-    end
-
     def create_hubspot_quote_deal(ns_quote)
       create_quote_deal_with(:regular, ns_quote)
     end
@@ -40,17 +31,6 @@ module Hubspot::Deal::HubspotQuoteDealHelper
     end
 
     private
-      def find_quote_deal(ns_quote_id)
-        filters = deal_filters("EQ")
-        payload = build_search_payload(filters)
-        hs_deal = Hubspot::Deal.search(payload)
-
-        return nil unless hs_deal&.dig(:id).present?
-
-        Rails.logger.info "************** Hubspot quote deal found ID #{hs_deal[:id]}"
-        hs_deal
-      end
-
       def create_quote_deal_with(type, ns_quote)
         payload = quote_deal_payload(type, ns_quote[:id])
         hs_quote_deal = Hubspot::Deal.create(payload)

@@ -14,6 +14,18 @@ module Netsuite::Quote::Hubspot::DealHelper
   DEAL_TO_DEAL = 451
 
   included do
+    def update_or_create_hubspot_child_deal
+      existing_deal = find_hubspot_quote_deal
+
+      return update_hubspot_quote_deal(existing_deal) if object_present_with_id?(existing_deal)
+
+      if args[:opportunity][:id].present?
+        @hs_parent_deal = find_hubspot_parent_deal
+      end
+
+      create_hubspot_child_deal
+    end
+
     def find_hubspot_quote_deal
       find_deal(child_deal_search_filter, raise_error: false)
     end
@@ -23,13 +35,11 @@ module Netsuite::Quote::Hubspot::DealHelper
     end
 
     def update_hubspot_quote_deal(hs_deal)
-      payload = payload_to_update_deal(hs_deal)
-      update_deal(payload)
+      update_deal(payload_to_update_deal(hs_deal))
     end
 
-    def create_hubspot_quote_deal
-      payload = payload_to_create_deal
-      create_deal(payload)
+    def create_hubspot_child_deal
+      create_deal(payload_to_create_deal)
     end
 
     private
@@ -51,7 +61,6 @@ module Netsuite::Quote::Hubspot::DealHelper
         {
           deal_id: hs_deal[:id],
           "amount": args[:total],
-          # "description": args[:terms],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
           "dealname": "#{args[:estimateId]} #{args[:title]}"
         }
@@ -59,32 +68,42 @@ module Netsuite::Quote::Hubspot::DealHelper
 
       def payload_to_create_deal
         {
-          "properties": build_properties,
-          "associations": build_associations
+          properties: base_properties.merge(optional_property),
+          associations: associations_list
         }
       end
 
-      def build_properties
+      def base_properties
         {
-          "dealname": "#{args[:estimateId]} #{args[:title]}",
+          "dealname": deal_name,
           "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
-          # "description": args[:terms],
           "netsuite_quote_id": args[:estimateId],
           "amount": args[:total],
           "netsuite_location": netsuite_estimate_location(args[:estimateId]),
           "netsuite_origin": "netsuite",
-          "netsuite_opportunity_id": args[:opportunity][:id],
           "is_child": "true"
         }
       end
 
-      def build_associations
-        [
+      def optional_property
+        return {} unless args[:opportunity].present?
+
+        { "netsuite_opportunity_id": args[:opportunity][:id] }
+      end
+
+      def associations_list
+        list = [
           association(@hs_contact[:id], DEAL_TO_CONTACT),
-          association(@hs_parent_deal[:id], DEAL_TO_DEAL),
           association(@hs_company[:id], DEAL_TO_COMPANY)
         ]
+
+        list << association(@hs_parent_deal[:id], DEAL_TO_DEAL) if @hs_parent_deal.present?
+        list
+      end
+
+      def deal_name
+        "#{args[:estimateId]} #{args[:title]}"
       end
   end
 end
