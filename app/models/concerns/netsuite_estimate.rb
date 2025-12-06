@@ -9,7 +9,7 @@ module NetsuiteEstimate
 
     def find_ns_estimate(netsuite_estimate_id)
       estimate = Netsuite::Estimate.show(netsuite_estimate_id)
-      process_response("Hubspot Estimate", "found", estimate)
+      process_response("Netsuite Estimate", "found", estimate)
     end
   end
 end
