@@ -1,7 +1,5 @@
-module Netsuite::Quote::Hubspot::DealHelper
+module Netsuite::Estimate::Hubspot::DealHelper
   extend ActiveSupport::Concern
-
-  include Netsuite::Hubspot::DealHelper
 
   STATUS_TO_STAGE_ID = {
     "10" => 1979552193, # Open
@@ -15,9 +13,9 @@ module Netsuite::Quote::Hubspot::DealHelper
 
   included do
     def update_or_create_hubspot_child_deal
-      existing_deal = find_hubspot_quote_deal
+      existing_deal = find_hubspot_child_deal
 
-      return update_hubspot_quote_deal(existing_deal) if object_present_with_id?(existing_deal)
+      return update_hubspot_child_deal(existing_deal) if object_present_with_id?(existing_deal)
 
       if args[:opportunity][:id].present?
         @hs_parent_deal = find_hubspot_parent_deal
@@ -26,20 +24,20 @@ module Netsuite::Quote::Hubspot::DealHelper
       create_hubspot_child_deal
     end
 
-    def find_hubspot_quote_deal
-      find_deal(child_deal_search_filter, raise_error: false)
+    def find_hubspot_child_deal
+      find_hs_deal(child_deal_search_filter, raise_error: false)
     end
 
     def find_hubspot_parent_deal
-      find_deal(parent_deal_search_filter)
+      find_hs_deal(parent_deal_search_filter)
     end
 
-    def update_hubspot_quote_deal(hs_deal)
-      update_deal(payload_to_update_deal(hs_deal))
+    def update_hubspot_child_deal(hs_deal)
+      update_hs_deal(payload_to_update_deal(hs_deal))
     end
 
     def create_hubspot_child_deal
-      create_deal(payload_to_create_deal)
+      create_hs_deal(payload_to_create_deal)
     end
 
     private

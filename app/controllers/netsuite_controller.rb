@@ -34,8 +34,8 @@ class NetsuiteController < ApplicationController
   def sync_estimate
     # validate_sync_order_params(%w[estimateId customer opportunity lineitems])
 
-    netsuite = Netsuite::Quote.new(params["netsuite"])
-    netsuite.sync_quote_estimate_with_quote_deal
+    netsuite = Netsuite::Estimate.new(params["netsuite"])
+    netsuite.sync_ns_estimate_with_hs_child_deal
     render json: { success: true }
   end
 

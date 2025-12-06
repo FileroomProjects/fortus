@@ -5,17 +5,23 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
   ORDER_TO_DEAL    = 512
   ORDER_TO_COMPANY = 509
 
-  include Netsuite::Hubspot::OrderHelper
-
   included do
+    def update_or_create_hubspot_order
+      hs_order = find_hubspot_order
+      return update_hubspot_order(hs_order) if object_present_with_id?(hs_order)
+
+      created_order = create_hubspot_order
+      created_order
+    end
+
     def update_hubspot_order(hs_order)
       payload = prepare_payload_for_hubspot_order_update(hs_order)
-      update_order(payload)
+      update_hs_order(payload)
     end
 
     def create_hubspot_order
       payload = prepare_payload_for_hubspot_order
-      create_order(payload)
+      create_hs_order(payload)
     end
 
     def find_hubspot_order

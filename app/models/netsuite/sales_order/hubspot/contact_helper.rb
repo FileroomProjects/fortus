@@ -1,11 +1,9 @@
 module Netsuite::SalesOrder::Hubspot::ContactHelper
   extend ActiveSupport::Concern
 
-  include Netsuite::Hubspot::ContactHelper
-
   included do
     def find_hubspot_contact
-      find_contact(contact_query)
+      find_hs_contact(contact_query)
     end
 
     private

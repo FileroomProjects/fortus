@@ -13,7 +13,7 @@ module Hubspot::Deal::NetsuiteContactHelper
 
       raise "Hubspot Contact details are blank" unless hs_contact_details.present?
 
-      Rails.logger.info "************** Fetched Hubspot contact details"
+      info_log("Fetched Hubspot contact details")
       ns_contact = find_or_create_netsuite_contact(hs_contact_details)
 
       return if ns_contact == "found by netsuite_contact_id" # No need to update hubspot contact
@@ -29,39 +29,30 @@ module Hubspot::Deal::NetsuiteContactHelper
         raise "Netsuite Contact ID & email are blank in Hubspot contact details" if ns_contact_id.blank? && email.blank?
 
         if ns_contact_id.present?
-          Rails.logger.info "************** Searching Netsuite Contact by id"
+          info_log("Searching Netsuite Contact by id")
           ns_contact = Netsuite::Contact.find_by_id(id: ns_contact_id)
 
           if ns_contact.present?
-            Rails.logger.info "************** Found Netsuite Contact by id #{ns_contact_id}"
+            info_log("Found Netsuite Contact by id #{ns_contact_id}")
             return "found by netsuite_contact_id"
           end
         end
 
         if email.present?
-          find_or_create_contact_by_email(hs_contact_details, email)
+          payload = payload_to_create_netsuit_contact(hs_contact_details)
+          find_or_create_ns_contact_by_emai(payload, email)
         end
       end
 
-      def find_or_create_contact_by_email(hs_contact_details, email)
-        Rails.logger.info "************** Searching Netsuite Contact by email"
-        ns_contact = Netsuite::Contact.find_by(email: email)
-        return ns_contact if ns_contact.present?
-
-        Rails.logger.info "************** Creating Netsuite Contact"
-        create_contact(hs_contact_details)
-      end
-
       def update_hubspot_contact(hs_contact_details, ns_contact)
-        Rails.logger.info "************** Updating Hubspot contact with netsuite_contact_id #{ns_contact[:id]}"
-        Hubspot::Contact.update({
+        update_hs_contact({
           contactId: hs_contact_details[:hs_object_id][:value],
           "netsuite_contact_id": (ns_contact[:id])
         })
       end
 
-      def create_contact(contact_details)
-        Netsuite::Contact.create(
+      def payload_to_create_netsuit_contact(contact_details)
+        {
           "firstName": hs_value(contact_details, :firstname, "dummy"),
           "lastName": hs_value(contact_details, :lastname, "dummy"),
           "email": hs_value(contact_details, :email, "dummy"),
@@ -69,7 +60,7 @@ module Hubspot::Deal::NetsuiteContactHelper
           "isInactive": false,
           "mobilePhone": hs_value(contact_details, :phone, "0000000000"),
           "company": { "id": netsuite_company_id, "type": "customer" }
-        )
+        }
       end
   end
 end

@@ -4,8 +4,8 @@ module Hubspot::Deal::BaseHelper
   include Hubspot::Deal::NetsuiteOpportunityHelper
   include Hubspot::Deal::NetsuiteContactHelper
   include Hubspot::Deal::NetsuiteCompanyHelper
-  include Hubspot::Deal::NetsuiteQuoteHelper
-  include Hubspot::Deal::HubspotQuoteDealHelper
+  include Hubspot::Deal::NetsuiteEstimateHelper
+  include Hubspot::Deal::HubspotChildDealHelper
 
   included do
   end

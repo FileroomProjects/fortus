@@ -9,9 +9,9 @@ class HubspotsController < ApplicationController
 
   def create_ns_quote
     load_deal
-    process_quote(
-      :prepare_payload_for_netsuite_quote,
-      :create_hubspot_quote_deal,
+    process_estimate(
+      :prepare_payload_for_netsuite_estimate,
+      :create_hubspot_child_deal,
       @hs_deal[:dealId]
     )
 
@@ -21,9 +21,9 @@ class HubspotsController < ApplicationController
   def create_duplicate_ns_quote
     load_deal
     @parent_deal = @hubspot.find_parent_deal
-    process_quote(
-      :prepare_payload_for_duplicate_netsuite_quote,
-      :create_duplicate_hubspot_quote_deal,
+    process_estimate(
+      :prepare_payload_for_duplicate_netsuite_estimate,
+      :create_duplicate_hubspot_child_deal,
       @parent_deal[:id]
     )
 
@@ -37,10 +37,10 @@ class HubspotsController < ApplicationController
       @hubspot = Hubspot::Deal.new(@hs_deal)
     end
 
-    def process_quote(payload_method, create_deal_method, parent_deal_id)
+    def process_estimate(payload_method, create_deal_method, parent_deal_id)
       payload = @hubspot.send(payload_method)
-      @ns_quote = @hubspot.create_netsuite_quote_estimate(payload)
-      @hs_deal_child = @hubspot.send(create_deal_method, @ns_quote)
-      @hubspot.association_for_deal(@hs_deal_child[:id], parent_deal_id, @ns_quote[:id])
+      @ns_estimate = @hubspot.create_ns_estimate(payload)
+      @hs_child_deal = @hubspot.send(create_deal_method, @ns_estimate)
+      @hubspot.association_for_deal(@hs_child_deal[:id], parent_deal_id, @ns_estimate[:id])
     end
 end

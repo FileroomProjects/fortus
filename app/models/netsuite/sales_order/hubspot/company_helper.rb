@@ -1,12 +1,10 @@
 module Netsuite::SalesOrder::Hubspot::CompanyHelper
   extend ActiveSupport::Concern
 
-  include Netsuite::Hubspot::CompanyHelper
-
   included do
     def find_hubspot_company
       filters = company_search_filters
-      find_company(filters)
+      find_hs_company(filters)
     end
 
     private
