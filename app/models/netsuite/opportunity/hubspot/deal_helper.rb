@@ -1,17 +1,15 @@
 module Netsuite::Opportunity::Hubspot::DealHelper
   extend ActiveSupport::Concern
 
-  include Netsuite::Hubspot::DealHelper
-
   included do
     def update_hubspot_deal
-      hs_deal = find_deal(filters)
+      hs_deal = find_hs_deal(deal_filters)
       payload = payload_to_update_deal(hs_deal[:id])
-      update_deal(payload)
+      update_hs_deal(payload)
     end
 
     private
-      def filters
+      def deal_filters
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
           build_search_filter("pipeline", "NEQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])

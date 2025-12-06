@@ -2,7 +2,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
   extend ActiveSupport::Concern
 
   included do
-    QUOTES_STAGES = [
+    ESTIMATE_STAGES = [
       { label: "Open", id: "1979552193" },
       { label: "Closed Won", id: "1979552198" },
       { label: "Closed Lost", id: "1979552199" }
@@ -14,36 +14,25 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
         return ns_opportunity
       end
 
-      netsuite_opportunity = Netsuite::Opportunity.show(@netsuite_opportunity_id)
-      if netsuite_opportunity.present?
-        Rails.logger.info "************** Netsuite Opportunity already exists with ID #{netsuite_opportunity[:id]}"
-      else
-        create_netsuite_opportunity_and_update_hubspot_deal
-      end
+      ns_opportunity = find_ns_opportunity_with_id(@netsuite_opportunity_id)
+
+      create_netsuite_opportunity_and_update_hubspot_deal unless object_present_with_id?(ns_opportunity)
     end
 
     def create_netsuite_opportunity_and_update_hubspot_deal
-      Rails.logger.info "************** Creating Netsuite Opportunity"
-
       payload = prepare_payload_for_netsuite_opportunity
-      ns_opportunity = Netsuite::Opportunity.create(payload)
-
-      unless object_present_with_id?(ns_opportunity)
-        raise "Failed to create Netsuite Opportunity"
-      end
+      ns_opportunity = create_ns_oppportunity(payload)
 
       @netsuite_opportunity_id = ns_opportunity[:id]
 
-      Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
-      Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
-
+      info_log("Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}")
       update({ "netsuite_opportunity_id": ns_opportunity[:id] })
       ns_opportunity
     end
 
     private
-      def get_stage_from_quotes_pl(stage_code)
-        Hubspot::Deal::QUOTES_STAGES.select { |a| a[:id] == stage_code }.first[:label]
+      def get_stage_from_pl(stage_code)
+        Hubspot::Deal::ESTIMATE_STAGES.select { |a| a[:id] == stage_code }.first[:label]
       end
 
       def prepare_payload_for_netsuite_opportunity

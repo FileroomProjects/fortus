@@ -1,13 +1,11 @@
-module Netsuite::Quote::Hubspot::ContactHelper
+module Netsuite::Estimate::Hubspot::ContactHelper
   extend ActiveSupport::Concern
-
-  include Netsuite::Hubspot::ContactHelper
 
   included do
     def update_or_create_hubspot_contact
       return nil unless args[:contact][:id].present?
 
-      hs_contact = find_contact(contact_filters, raise_error: false)
+      hs_contact = find_hs_contact(contact_filters, raise_error: false)
       if object_present_with_id?(hs_contact)
         update_hubspot_contact(hs_contact)
       else
@@ -17,12 +15,12 @@ module Netsuite::Quote::Hubspot::ContactHelper
 
     def update_hubspot_contact(hs_contact)
       payload = payload_to_update_hubspot_contact(hs_contact[:id])
-      update_contact(payload)
+      update_hs_contact(payload)
     end
 
     def create_hubspot_contact
       payload = payload_to_create_hubspot_contact
-      create_contact(payload)
+      create_hs_contact(payload)
     end
 
     private

@@ -1,13 +1,11 @@
-module Netsuite::Quote::Hubspot::CompanyHelper
+module Netsuite::Estimate::Hubspot::CompanyHelper
   extend ActiveSupport::Concern
-
-  include Netsuite::Hubspot::CompanyHelper
 
   included do
     def update_or_create_hubspot_company
       return nil unless args[:customer][:id].present?
 
-      hs_company = find_company(company_filters, raise_error: false)
+      hs_company = find_hs_company(company_filters, raise_error: false)
       if object_present_with_id?(hs_company)
         update_hubspot_company(hs_company)
       else
@@ -17,12 +15,12 @@ module Netsuite::Quote::Hubspot::CompanyHelper
 
     def update_hubspot_company(hs_company)
       payload = payload_to_update_hubspot_company(hs_company[:id])
-      update_company(payload)
+      update_hs_company(payload)
     end
 
     def create_hubspot_company
       payload = payload_to_create_hubspot_company
-      create_company(payload)
+      create_hs_company(payload)
     end
 
     private

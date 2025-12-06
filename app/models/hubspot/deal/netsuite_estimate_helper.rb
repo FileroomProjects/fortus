@@ -1,4 +1,4 @@
-module Hubspot::Deal::NetsuiteQuoteHelper
+module Hubspot::Deal::NetsuiteEstimateHelper
   extend ActiveSupport::Concern
 
   included do
@@ -6,21 +6,9 @@ module Hubspot::Deal::NetsuiteQuoteHelper
     NETSUITE_CASE_TYPE_ID = "6"
     NETSUITE_ORIGIN_REF_NAME  = "Opportunity "
 
-    def create_netsuite_quote_estimate(payload)
-      Rails.logger.info "************** Creating Netsuite estimate"
-      ns_quote = Netsuite::Quote.create(payload)
-
-      unless object_present_with_id?(ns_quote)
-        raise "Failed to create Netsuite estimate"
-      end
-
-      Rails.logger.info "************** Created Netsuite Quote estimate with ID #{ns_quote[:id]}"
-      ns_quote
-    end
-
-    def prepare_payload_for_duplicate_netsuite_quote
-      ns_quote_estimate = find_netsuite_estimate
-      duplicate = ns_quote_estimate
+    def prepare_payload_for_duplicate_netsuite_estimate
+      ns_estimate = find_netsuite_estimate
+      duplicate = ns_estimate
 
       %w[id tranId transactionNumber createdDate lastModifiedDate status custbody17].each do |field|
         duplicate.delete(field)
@@ -30,25 +18,20 @@ module Hubspot::Deal::NetsuiteQuoteHelper
         v.is_a?(Hash) && v.key?("links") && !v.key?("id")
       end
 
-      duplicate["item"] = Netsuite::Quote.fetch_items(fetch_prop_field(:netsuite_quote_id))
+      duplicate["item"] = Netsuite::Estimate.fetch_items(fetch_prop_field(:netsuite_quote_id))
 
       duplicate
     end
 
     def find_netsuite_estimate
-      netsuite_quote_id = fetch_prop_field(:netsuite_quote_id)
+      netsuite_estimate_id = fetch_prop_field(:netsuite_quote_id)
 
-      raise "netsuite_quote_id if not prent in child deal" if netsuite_quote_id.blank?
+      raise "netsuite_quote_id is not present in child deal" if netsuite_estimate_id.blank?
 
-      ns_quote = Netsuite::Quote.show(netsuite_quote_id)
-
-      raise "Estimate not found" unless object_present_with_id?(ns_quote)
-
-      Rails.logger.info "Found netsuite estimate with id #{ns_quote[:id]}"
-      ns_quote
+      find_ns_estimate(netsuite_estimate_id)
     end
 
-    def prepare_payload_for_netsuite_quote
+    def prepare_payload_for_netsuite_estimate
       hs_contact_details = associated_contact_details
       ns_company_id = associated_company_details[:netsuite_company_id]&.fetch("value", "")
       ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")

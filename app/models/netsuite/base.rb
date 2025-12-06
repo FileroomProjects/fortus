@@ -3,7 +3,7 @@ module Netsuite
     require "ostruct"
 
     include HTTParty
-    include IntegrationCommon
+    include BaseConcern
 
     attr_accessor :args
 
