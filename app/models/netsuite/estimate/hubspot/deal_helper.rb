@@ -29,7 +29,7 @@ module Netsuite::Estimate::Hubspot::DealHelper
     end
 
     def find_hubspot_parent_deal
-      find_hs_deal(parent_deal_search_filter)
+      find_hs_deal(parent_deal_search_filter, raise_error: false)
     end
 
     def update_hubspot_child_deal(hs_deal)
