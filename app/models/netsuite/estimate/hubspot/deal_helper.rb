@@ -47,7 +47,7 @@ module Netsuite::Estimate::Hubspot::DealHelper
 
       def parent_deal_base_properties
         {
-          "dealname": args[:title],
+          "dealname": args[:opportunity][:title],
           "pipeline": HUBSPOT_SALES_TEAM_PIPELINE,
           "dealstage": HUBSPOT_SALES_TEAM_INTRODUCTION_STAGE,
           "netsuite_opportunity_id": args[:opportunity][:id],
