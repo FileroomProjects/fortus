@@ -5,12 +5,26 @@ module Netsuite::Estimate::Hubspot::ContactHelper
     def update_or_create_hubspot_contact
       return nil unless args[:contact][:id].present?
 
-      hs_contact = find_hs_contact(contact_filters, raise_error: false)
+      hs_contact = find_hubspot_contact
       if object_present_with_id?(hs_contact)
         update_hubspot_contact(hs_contact)
       else
         create_hubspot_contact
       end
+    end
+
+    # Try to find by id first, then by email; return first match
+    def find_hubspot_contact
+      [
+        [ :id,    :build_contact_filter_with_id ],
+        [ :email, :build_contact_filter_with_email ]
+      ].each do |key, builder|
+        next unless args[:contact][key].present?
+        hs_contact = find_hs_contact(send(builder), raise_error: false)
+        return hs_contact if object_present_with_id?(hs_contact)
+      end
+
+      nil
     end
 
     def update_hubspot_contact(hs_contact)
@@ -24,9 +38,15 @@ module Netsuite::Estimate::Hubspot::ContactHelper
     end
 
     private
-      def contact_filters
+      def build_contact_filter_with_id
         [
           build_search_filter("netsuite_contact_id", "EQ", args[:contact][:id])
+        ]
+      end
+
+      def build_contact_filter_with_email
+        [
+          build_search_filter("email", "EQ", args[:contact][:email])
         ]
       end
 
@@ -37,7 +57,8 @@ module Netsuite::Estimate::Hubspot::ContactHelper
           "lastname": args[:contact][:lastName],
           "email": args[:contact][:email],
           "jobtitle":  args[:contact][:jobTitle],
-          "phone": args[:contact][:phone]
+          "phone": args[:contact][:phone],
+          "netsuite_contact_id": args[:contact][:id]
         }
       end
 
