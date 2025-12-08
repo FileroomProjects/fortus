@@ -30,6 +30,7 @@ module Netsuite
     def update_or_create_associated_hubspot_records
       @hs_company = update_or_create_hubspot_company
       @hs_contact = update_or_create_hubspot_contact
+      @hs_parent_deal = find_or_create_hubspot_parent_deal
     end
   end
 end
