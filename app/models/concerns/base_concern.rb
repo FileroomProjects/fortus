@@ -13,13 +13,7 @@ module BaseConcern
 
   included do
     def build_search_payload(filters)
-      {
-        filterGroups: [
-          {
-            filters: filters
-          }
-        ]
-      }
+      { filterGroups: [ { filters: filters } ] }
     end
 
     def build_search_filter(property_name, operator, value, multiple: false)

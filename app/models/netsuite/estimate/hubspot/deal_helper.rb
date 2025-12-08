@@ -6,13 +6,6 @@ module Netsuite::Estimate::Hubspot::DealHelper
     "14" => 1979552199 # Closed Lost
   }.freeze
 
-
-  DEAL_TO_CONTACT = 3
-  DEAL_TO_COMPANY = 5
-  DEAL_TO_DEAL = 451
-  HUBSPOT_SALES_TEAM_PIPELINE = 666164048
-  HUBSPOT_SALES_TEAM_INTRODUCTION_STAGE = 977956704
-
   included do
     def find_or_create_hubspot_parent_deal
       hs_deal = find_hubspot_parent_deal
@@ -34,7 +27,7 @@ module Netsuite::Estimate::Hubspot::DealHelper
       def parent_deal_search_filter
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
-          build_search_filter("pipeline", "NEQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "NEQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 
@@ -48,8 +41,8 @@ module Netsuite::Estimate::Hubspot::DealHelper
       def parent_deal_base_properties
         {
           "dealname": args[:opportunity][:title],
-          "pipeline": HUBSPOT_SALES_TEAM_PIPELINE,
-          "dealstage": HUBSPOT_SALES_TEAM_INTRODUCTION_STAGE,
+          "pipeline": Hubspot::Constants::SALES_TEAM_PIPELINE,
+          "dealstage": Hubspot::Constants::SALES_TEAM_INTRODUCTION_STAGE,
           "netsuite_opportunity_id": args[:opportunity][:id],
           "amount": args[:opportunity][:projectedTotal],
           "closedate": args[:opportunity][:expectedClose],
@@ -59,8 +52,8 @@ module Netsuite::Estimate::Hubspot::DealHelper
       end
 
       def child_deal_associations_list
-        association(@hs_contact[:id], DEAL_TO_CONTACT)
-        association(@hs_company[:id], DEAL_TO_COMPANY)
+        association(@hs_contact[:id], Hubspot::Constants::DEAL_TO_CONTACT)
+        association(@hs_company[:id], Hubspot::Constants::DEAL_TO_COMPANY)
       end
   end
 end

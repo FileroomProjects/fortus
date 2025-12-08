@@ -12,7 +12,7 @@ module Netsuite::Opportunity::Hubspot::DealHelper
       def deal_filters
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
-          build_search_filter("pipeline", "NEQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "NEQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 

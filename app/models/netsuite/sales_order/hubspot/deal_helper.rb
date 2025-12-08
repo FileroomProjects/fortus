@@ -26,7 +26,7 @@ module Netsuite::SalesOrder::Hubspot::DealHelper
       def build_filters(operator)
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
-          build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", operator, Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 

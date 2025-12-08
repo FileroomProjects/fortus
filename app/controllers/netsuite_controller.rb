@@ -39,7 +39,7 @@ class NetsuiteController < ApplicationController
     render json: { success: true }
   end
 
-  def sync_deal
+  def sync_opportunity
     # validate_sync_order_params(%w[opportunity])
 
     netsuite = Netsuite::Opportunity.new(params["netsuite"])

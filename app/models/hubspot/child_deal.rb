@@ -39,17 +39,5 @@ module Hubspot
       client = Hubspot::Client.new(body: body)
       client.create_association(from, to)
     end
-
-    def line_item_payload(item)
-      {
-        "properties": {
-          "name": item[:description],
-          "quantity": item[:quantity],
-          "price": item[:amount],
-          "description": item[:description],
-          "netsuite_item_id": item[:item][:id]
-        }
-      }
-    end
   end
 end

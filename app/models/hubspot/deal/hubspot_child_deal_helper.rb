@@ -36,8 +36,8 @@ module Hubspot::Deal::HubspotChildDealHelper
         {
           "properties": {
             "dealname": dealname,
-            "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
-            "dealstage": ENV["HUBSPOT_DEFAULT_DEALSTAGE"],
+            "pipeline": Hubspot::Constants::NETSUITE_QUOTE_PIPELINE,
+            "dealstage": Hubspot::Constants::NETSUITE_QUOTE_OPEN_STAGE,
             "netsuite_quote_id": ns_estimate_id,
             "amount": fetch_prop_field(:amount),
             "netsuite_location": netsuite_estimate_location(ns_estimate_id),
@@ -51,7 +51,7 @@ module Hubspot::Deal::HubspotChildDealHelper
       def deal_filters(operator)
         [
           build_search_filter("netsuite_opportunity_id", "EQ", @netsuite_opportunity_id),
-          build_search_filter("pipeline", operator, ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", operator, Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 

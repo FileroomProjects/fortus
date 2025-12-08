@@ -2,14 +2,9 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
   extend ActiveSupport::Concern
 
   STATUS_TO_STAGE_ID = {
-    "10" => 1979552193, # Open
-    "14" => 1979552199 # Closed Lost
+    "10" => Hubspot::Constants::NETSUITE_QUOTE_OPEN_STAGE,
+    "14" => Hubspot::Constants::NETSUITE_QUOTE_CLOSED_LOST_STAGE
   }.freeze
-
-
-  DEAL_TO_CONTACT = 3
-  DEAL_TO_COMPANY = 5
-  DEAL_TO_DEAL = 451
 
   included do
     def update_or_create_hubspot_child_deal
@@ -36,7 +31,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       def child_deal_search_filter
         [
           build_search_filter("netsuite_quote_id", "EQ", args[:estimateId]),
-          build_search_filter("pipeline", "EQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "EQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 
@@ -59,7 +54,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       def child_deal_base_properties
         {
           "dealname": deal_name,
-          "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
+          "pipeline": Hubspot::Constants::NETSUITE_QUOTE_PIPELINE,
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
           "netsuite_quote_id": args[:estimateId],
           "amount": args[:total],
@@ -77,11 +72,11 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
 
       def child_deal_associations_list
         list = [
-          association(@hs_contact[:id], DEAL_TO_CONTACT),
-          association(@hs_company[:id], DEAL_TO_COMPANY)
+          association(@hs_contact[:id], Hubspot::Constants::DEAL_TO_CONTACT),
+          association(@hs_company[:id], Hubspot::Constants::DEAL_TO_COMPANY)
         ]
 
-        list << association(@hs_parent_deal[:id], DEAL_TO_DEAL) if @hs_parent_deal.present?
+        list << association(@hs_parent_deal[:id], Hubspot::Constants::DEAL_TO_DEAL) if @hs_parent_deal.present?
         list
       end
 
