@@ -2,6 +2,7 @@ module HubspotLineItem
   extend ActiveSupport::Concern
 
   included do
+    # Sync HubSpot line items so they match the provided NetSuite items.
     def sync_line_items(hs_object, object_type, association_type)
       existing_ids = line_item_ids_for_associated_object(hs_object[:id], object_type)
 
@@ -11,7 +12,7 @@ module HubspotLineItem
         args[:items].each do |item|
           create_and_associate_line_item(item, hs_object[:id], object_type, association_type)
         end
-        return
+        return # Nothing to update or remove when there are no existing line items
       end
 
       args[:items].each do |item|
@@ -24,6 +25,10 @@ module HubspotLineItem
       remove_line_items(updated_ids, hs_object[:id], object_type, ns_item_ids)
     end
 
+    # Create a new HubSpot line item or update an existing one if found.
+    # - item: NetSuite item hash
+    # - existing_ids: Array of existing HubSpot line item IDs associated with the object
+    # - object_id/object_type/association_type: used when creating and associating a new item
     def create_or_update_line_item(item, existing_ids, object_id, object_type, association_type)
       filters = line_item_search_filters(item, existing_ids)
       hs_line_item = find_line_item(filters)
@@ -35,6 +40,8 @@ module HubspotLineItem
       end
     end
 
+    # Create a HubSpot line item from the given item data and associate it
+    # with the provided HubSpot object(deal/order).
     def create_and_associate_line_item(item, object_id, object_type, association_type)
       payload = line_item_payload(item)
       hs_line_item = Hubspot::LineItem.create(payload)
@@ -42,6 +49,8 @@ module HubspotLineItem
       associate_line_item(hs_line_item[:id], object_id, object_type, association_type)
     end
 
+    # Find a HubSpot line item using the provided search filters.
+    # Returns the search result (may be nil/empty) and does not raise on not found.
     def find_line_item(filters)
       payload = build_search_payload(filters)
       hs_line_item = Hubspot::LineItem.search(payload)
@@ -67,6 +76,11 @@ module HubspotLineItem
         }
       end
 
+      # Remove Association betweeen HubSpot objects and line items that are not present in the corresponding
+      # NetSuite record (for example, a sales order or estimate).
+      #
+      # - hs_line_item_ids: array of HubSpot line item IDs associated with the object
+      # - from_object_id/from_object_type: HubSpot object used in the association
       def remove_line_items(hs_line_item_ids, from_object_id, from_object_type, ns_item_ids)
         hs_line_item_ids.each do |hs_item_id|
           hs_line_item = Hubspot::LineItem.find_by_id(hs_item_id)
@@ -78,6 +92,7 @@ module HubspotLineItem
         end
       end
 
+      # Return an array of HubSpot line item IDs associated with the given object.
       def line_item_ids_for_associated_object(object_id, object_type)
         line_items = Hubspot::LineItem.find_by_object_id(object_id, object_type)
 
@@ -86,6 +101,8 @@ module HubspotLineItem
         line_items.map { |item| item["toObjectId"].to_s }
       end
 
+      # Remove the association between a HubSpot line item and a HubSpot object.
+      # Raises if the remove operation does not return success.
       def remove_line_item_association(hs_item_id, from_object_id, from_object_type)
         response = Hubspot::LineItem.remove_line_item_association(hs_item_id, from_object_id, from_object_type)
 
@@ -94,6 +111,8 @@ module HubspotLineItem
         info_log("Removed Line Item with ID #{hs_item_id}") if response == "success"
       end
 
+      # Associate a HubSpot line item to a HubSpot object using the provided
+      # association payload builder.
       def associate_line_item(line_item_id, object_id, object_type, association_type)
         payload = payload_to_associate(line_item_id, object_id, association_type)
         Hubspot::LineItem.associate_line_item(payload, object_type)

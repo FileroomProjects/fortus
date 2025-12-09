@@ -40,7 +40,7 @@ module Hubspot::Deal::NetsuiteContactHelper
 
         if email.present?
           payload = payload_to_create_netsuit_contact(hs_contact_details)
-          find_or_create_ns_contact_by_emai(payload, email)
+          find_or_create_ns_contact_by_email(payload, email)
         end
       end
 

@@ -2,6 +2,7 @@ module NetsuiteCustomer
   extend ActiveSupport::Concern
 
   included do
+    # Find a NetSuite customer by company name or create one if missing.
     def find_or_create_ns_customer_by_company_name(company_name)
       customer = Netsuite::Customer.find_by(columnName: "companyname", value: company_name)
 
@@ -11,6 +12,7 @@ module NetsuiteCustomer
       customer
     end
 
+    # Create a NetSuite customer using a default payload based on company name.
     def create_ns_customer(company_name)
       payload = create_customer_payload(company_name)
       customer = Netsuite::Customer.create(payload)
@@ -18,6 +20,7 @@ module NetsuiteCustomer
     end
 
     private
+      # Build a default payload for creating a NetSuite customer.
       def create_customer_payload(company_name)
         {
           "companyName": company_name,

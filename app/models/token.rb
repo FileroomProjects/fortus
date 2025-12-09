@@ -18,6 +18,7 @@ class Token < ApplicationRecord
     netsuite.first
   end
 
+  # Create or update the stored NetSuite access token.
   def self.update_netsuite_token(access_token:, refresh_token: nil, expires_in: nil)
     token = netsuite.first_or_initialize
 

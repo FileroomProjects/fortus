@@ -2,6 +2,8 @@ module Netsuite::Estimate::Hubspot::ContactHelper
   extend ActiveSupport::Concern
 
   included do
+    # Ensure a HubSpot contact exists for the NetSuite contact.
+    # - Returns the updated or newly created HubSpot contact, or nil when no contact id is present.
     def update_or_create_hubspot_contact
       return nil unless args[:contact][:id].present?
 
@@ -13,7 +15,8 @@ module Netsuite::Estimate::Hubspot::ContactHelper
       end
     end
 
-    # Try to find by id first, then by email; return first match
+    # Find a HubSpot contact for the current NetSuite contact.
+    # Searches by NetSuite contact id first, then by email; returns the first match or nil.
     def find_hubspot_contact
       [
         [ :id,    :build_contact_filter_with_id ],

@@ -2,6 +2,8 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
   extend ActiveSupport::Concern
 
   included do
+    # Ensure a HubSpot company exists for the NetSuite customer.
+    # - Returns the updated or newly created HubSpot company object, or nil when no customer id is present.
     def update_or_create_hubspot_company
       return nil unless args[:customer][:id].present?
 
@@ -13,7 +15,8 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
       end
     end
 
-    # Try to find by id first, then by name; stop on first match
+    # Find a HubSpot company for the current NetSuite customer.
+    # Searches by NetSuite company id first, then by company name; returns the first match or nil.
     def find_hubspot_company
       [
         [ :id,   :build_company_filter_with_id ],

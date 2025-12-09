@@ -7,6 +7,8 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
   }.freeze
 
   included do
+    # Ensure a HubSpot child deal exists for this NetSuite estimate.
+    # If a matching HS child deal exists, update it; otherwise create a new one.
     def update_or_create_hubspot_child_deal
       existing_deal = find_hubspot_child_deal
 
@@ -15,14 +17,18 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       create_hubspot_child_deal
     end
 
+    # Search for an existing HubSpot child deal using NetSuite estimate id and pipeline.
+    # Returns the found deal object or nil (does not raise when not found).
     def find_hubspot_child_deal
       find_hs_deal(child_deal_search_filter, raise_error: false)
     end
 
+    # Update an existing HubSpot child deal.
     def update_hubspot_child_deal(hs_deal)
       update_hs_deal(payload_to_update_deal(hs_deal))
     end
 
+    # Create a new HubSpot child deal with properties and associations based on the NetSuite estimate.
     def create_hubspot_child_deal
       create_hs_deal(payload_to_create_child_deal)
     end
