@@ -8,18 +8,8 @@ module Netsuite::SalesOrder::Hubspot::DealHelper
     end
 
     def update_parent_and_child_deal
-      update_parent_deal
-      update_child_deal
-    end
-
-    def update_parent_deal
-      payload = payload_to_update_parent_deal
-      update_hs_deal(payload)
-    end
-
-    def update_child_deal
-      payload = payload_to_update_child_deal
-      update_hs_deal(payload)
+      update_hs_deal(payload_to_update_parent_deal)
+      update_hs_deal(payload_to_update_child_deal)
     end
 
     private

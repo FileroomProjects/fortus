@@ -7,6 +7,9 @@ module Netsuite::Estimate::Hubspot::DealHelper
   }.freeze
 
   included do
+    # Ensure a HubSpot parent deal exists for the NetSuite opportunity.
+    # - Returns the existing HubSpot deal when found, otherwise creates and returns a new one.
+    # - Returns nil if no NetSuite opportunity data is present in `args`.
     def find_or_create_hubspot_parent_deal
       return nil unless args[:opportunity].present?
 
@@ -17,10 +20,12 @@ module Netsuite::Estimate::Hubspot::DealHelper
       create_hubspot_parent_deal
     end
 
+    # Search for a HubSpot parent deal sinced with NetSuite opportunity.
     def find_hubspot_parent_deal
       find_hs_deal(parent_deal_search_filter, raise_error: false)
     end
 
+    # Create a new HubSpot parent deal using NetSuite opportunity fields.
     def create_hubspot_parent_deal
       create_hs_deal(payload_to_create_parent_deal)
     end
