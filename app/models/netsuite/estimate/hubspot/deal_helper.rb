@@ -27,7 +27,12 @@ module Netsuite::Estimate::Hubspot::DealHelper
     end
 
     def create_hubspot_parent_deal
-      create_hs_deal(payload_to_create_parent_deal)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [START] [opportunity_id: #{args[:opportunity][:id]}] Initiating opportunity synchronization"
+      hs_deal = create_hs_deal(payload_to_create_parent_deal)
+
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Deal created successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [COMPLETE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Opportunity synchronized successfully"
+      hs_deal
     end
 
     private

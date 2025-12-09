@@ -20,13 +20,18 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
     end
 
     def create_netsuite_opportunity_and_update_hubspot_deal
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [START] [deal_id: #{deal_id}] Initiating deal synchronization"
       payload = prepare_payload_for_netsuite_opportunity
       ns_opportunity = create_ns_oppportunity(payload)
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [CREATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Netsuite opportunity created successfully"
 
       @netsuite_opportunity_id = ns_opportunity[:id]
 
-      info_log("Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}")
-      update({ "netsuite_opportunity_id": ns_opportunity[:id] })
+      hs_deal = update({ "netsuite_opportunity_id": ns_opportunity[:id] })
+      if hs_deal.present?
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] HubSpot deal updated successfully"
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Opportunity synchronized successfully"
+      end
       ns_opportunity
     end
 

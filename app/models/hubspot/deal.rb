@@ -44,14 +44,26 @@ module Hubspot
       contact_id = Hubspot::Contact.find_by_deal_id(deal_id)&.[](:toObjectId)
       raise "Contact is not present" if contact_id.blank?
 
-      Hubspot::Contact.find_by_id(contact_id)
+      contact = Hubspot::Contact.find_by_id(contact_id)
+      if contact.present?
+        Rails.logger.info "[INFO] [API.HUBSPOT.CONTACT] [FETCH] [company_id: #{contact_id}] HubSpot contact deatils fetched"
+        contact
+      else
+        raise "Hubspot Contact details are blank"
+      end
     end
 
     def associated_company_details
       company_id = Hubspot::Company.find_by_deal_id(deal_id)&.[](:toObjectId)
       raise "Company is not present" if company_id.blank?
 
-      Hubspot::Company.find_by_id(company_id)
+      company = Hubspot::Company.find_by_id(company_id)
+      if company.present?
+        Rails.logger.info "[INFO] [API.HUBSPOT.COMPANY] [FETCH] [company_id: #{company_id}] HubSpot company deatils fetched"
+        company
+      else
+        raise "Hubspot Company details are blank"
+      end
     end
 
     def self.find_by(args)

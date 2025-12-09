@@ -5,6 +5,7 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
     def update_or_create_hubspot_company
       return nil unless args[:customer][:id].present?
 
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [START] [customer_id: #{args[:customer][:id]}] Initiating customer synchronization"
       hs_company = find_hubspot_company
       if object_present_with_id?(hs_company)
         update_hubspot_company(hs_company)
@@ -29,12 +30,18 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
 
     def update_hubspot_company(hs_company)
       payload = payload_to_update_hubspot_company(hs_company[:id])
-      update_hs_company(payload)
+      hs_company = update_hs_company(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [UPDATE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Company updated successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [COMPLETE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Customer synchronized successfully"
+      hs_company
     end
 
     def create_hubspot_company
       payload = payload_to_create_hubspot_company
-      create_hs_company(payload)
+      hs_company = create_hs_company(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [CREATE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Company created successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [COMPLETE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Customer synchronized successfully"
+      hs_company
     end
 
     private

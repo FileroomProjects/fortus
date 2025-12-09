@@ -10,14 +10,19 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
     def handle_company_and_update_hubspot
       hs_company_details = associated_company_details # fetch from hs
-      raise "Hubspot Company details are blank" unless hs_company_details.present?
 
-      info_log("Fetched Hubspot company details")
       ns_customer = find_or_create_netsuite_customer(hs_company_details)
 
       return if ns_customer == "found by netsuite_company_id" # No need to update hubspot company
 
-      update_hubspot_company(hs_company_details, ns_customer) if object_present_with_id?(ns_customer)
+      if object_present_with_id?(ns_customer)
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [CREATE] [company_id: #{hs_company_details[:hs_object_id][:value]}, customer_id: #{ns_customer[:id]}] Netsuite customer created successfully"
+        updated_company = update_hubspot_company(hs_company_details, ns_customer)
+        if object_present_with_id?(updated_company)
+          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [UPDATE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] HubSpot company updated successfully"
+          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [COMPLETE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] Company synchronized successfully"
+        end
+      end
     end
 
     private
@@ -27,13 +32,16 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
         raise "Netsuite Company ID & name are blank in Hubspot company details" if ns_company_id.blank? && company_name.blank?
 
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [START] [company_id: #{hs_company_details[:hs_object_id][:value]}] Initiating company synchronization"
         if ns_company_id.present?
-          info_log("Searching Netsuite Customer by id")
+          Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_company_id}] Searching netsuite customer with id"
           ns_customer = Netsuite::Customer.find_by(columnName: "id", value: ns_company_id)
 
-          if ns_customer.present?
-            info_log("Found Netsuite Customer by id #{ns_company_id}")
+          if object_present_with_id?(ns_customer)
+            Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_customer[:id]}] Netsuite customer found with id"
             return "found by netsuite_company_id"
+          else
+            Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_company_id}] Netsuite customer not found with id"
           end
         end
 

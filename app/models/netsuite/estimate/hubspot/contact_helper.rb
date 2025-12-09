@@ -5,6 +5,7 @@ module Netsuite::Estimate::Hubspot::ContactHelper
     def update_or_create_hubspot_contact
       return nil unless args[:contact][:id].present?
 
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [START] [ns_contact_id: #{args[:customer][:id]}] Initiating nestuite contact synchronization"
       hs_contact = find_hubspot_contact
       if object_present_with_id?(hs_contact)
         update_hubspot_contact(hs_contact)
@@ -29,12 +30,18 @@ module Netsuite::Estimate::Hubspot::ContactHelper
 
     def update_hubspot_contact(hs_contact)
       payload = payload_to_update_hubspot_contact(hs_contact[:id])
-      update_hs_contact(payload)
+      hs_contact = update_hs_contact(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [UPDATE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Hubspot Contact updated successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [COMPLETE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Netsuite Contact synchronized successfully"
+      hs_contact
     end
 
     def create_hubspot_contact
       payload = payload_to_create_hubspot_contact
-      create_hs_contact(payload)
+      hs_contact = create_hs_contact(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [CREATE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Hubspot Contact created successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [COMPLETE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Nestuite Contact synchronized successfully"
+      hs_contact
     end
 
     private

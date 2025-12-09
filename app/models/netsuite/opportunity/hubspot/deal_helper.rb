@@ -3,9 +3,13 @@ module Netsuite::Opportunity::Hubspot::DealHelper
 
   included do
     def update_hubspot_deal
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [START] [opportunity_id: #{args[:opportunity][:id]}] Initiating opportunity synchronization"
       hs_deal = find_hs_deal(deal_filters)
       payload = payload_to_update_deal(hs_deal[:id])
-      update_hs_deal(payload)
+      hs_deal = update_hs_deal(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Deal updated succesfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [COMPLETE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Opportunity synchronized successfully"
+      hs_deal
     end
 
     private

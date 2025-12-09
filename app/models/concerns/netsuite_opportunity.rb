@@ -5,9 +5,12 @@ module NetsuiteOpportunity
     def find_ns_opportunity_with_id(netsuite_opportunity_id)
       opportunity = Netsuite::Opportunity.show(netsuite_opportunity_id)
 
-      return nil unless object_present_with_id?(opportunity)
+      unless object_present_with_id?(opportunity)
+        Rails.logger.info "[INFO] [API.NETSUITE.OPPORTUNITY] [FETCH] [opportunity_id: #{opportunity[:id]}] Netsuite opportunity deatils not fetched"
+        return nil
+      end
 
-      info_log("Netsuite Opportunity already exists with ID #{opportunity[:id]}")
+      Rails.logger.info "[INFO] [API.NETSUITE.OPPORTUNITY] [FETCH] [opportunity_id: #{opportunity[:id]}] Netsuite opportunity deatils fetched"
       opportunity
     end
 

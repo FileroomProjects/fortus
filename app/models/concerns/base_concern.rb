@@ -61,27 +61,13 @@ module BaseConcern
       "https://#{ENV['NETSUITE_ACCOUNT_ID']}.app.netsuite.com/app/accounting/transactions/estimate.nl?id=#{ns_estimate_id}&whence="
     end
 
-    def process_response(object_name, action, object, raise_error = true)
+    def process_response(object_name, action, object)
       success = object_present_with_id?(object)
 
-      log_message(object_name, action, object, success)
-
-      raise "Failed to #{action} #{object_name}" if !success && raise_error
-      return nil unless success
-
-      object
-    end
-
-    def log_message(object_name, action, object, success)
-      if success
-        info_log("#{action} #{object_name} with ID #{object[:id]}")
-      else
-        info_log("#{object_name} not #{action}")
+      unless success
+        raise "#{object_name} not #{action}"
       end
-    end
-
-    def info_log(log_message)
-      Rails.logger.info "************** #{log_message}"
+      object
     end
   end
 end

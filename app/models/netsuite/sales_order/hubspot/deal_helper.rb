@@ -13,8 +13,12 @@ module Netsuite::SalesOrder::Hubspot::DealHelper
     end
 
     def update_parent_deal
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [START] [opportunity_id: #{args[:opportunity][:id]}] Initiating opportunity synchronization"
       payload = payload_to_update_parent_deal
-      update_hs_deal(payload)
+      hs_deal = update_hs_deal(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Deal updated successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [COMPLETE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Opportunity synchronized successfully"
+      hs_deal
     end
 
     def update_child_deal

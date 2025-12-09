@@ -14,6 +14,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
   included do
     def update_or_create_hubspot_child_deal
       existing_deal = find_hubspot_child_deal
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [START] [estimate_id: #{args[:estimateId]}] Initiating estimate synchronization"
 
       return update_hubspot_child_deal(existing_deal) if object_present_with_id?(existing_deal)
 
@@ -25,11 +26,17 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
     end
 
     def update_hubspot_child_deal(hs_deal)
-      update_hs_deal(payload_to_update_deal(hs_deal))
+      hs_deal = update_hs_deal(payload_to_update_deal(hs_deal))
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [UPDATE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Deal updated successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [COMPLETE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Estimate synchronized successfully"
+      hs_deal
     end
 
     def create_hubspot_child_deal
-      create_hs_deal(payload_to_create_child_deal)
+      hs_deal = create_hs_deal(payload_to_create_child_deal)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [CREATE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Deal created successfully"
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [COMPLETE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Estimate synchronized successfully"
+      hs_deal
     end
 
     private

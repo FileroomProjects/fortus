@@ -11,14 +11,18 @@ module Hubspot::Deal::NetsuiteContactHelper
     def handle_contact_and_update_hubspot
       hs_contact_details = associated_contact_details
 
-      raise "Hubspot Contact details are blank" unless hs_contact_details.present?
-
-      info_log("Fetched Hubspot contact details")
       ns_contact = find_or_create_netsuite_contact(hs_contact_details)
 
       return if ns_contact == "found by netsuite_contact_id" # No need to update hubspot contact
 
-      update_hubspot_contact(hs_contact_details, ns_contact) if object_present_with_id?(ns_contact)
+      if object_present_with_id?(ns_contact)
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.CONTACT] [CREATE] [hs_contact_id: #{hs_contact_details[:hs_object_id][:value]}, ns_contact_id: #{ns_contact[:id]}] Netsuite contact created successfully"
+        updated_contact = update_hubspot_contact(hs_contact_details, ns_contact)
+        if object_present_with_id?(updated_contact)
+          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.CONTACT] [UPDATE] [hs_contact_id: #{updated_contact[:id]}, ns_contact_id: #{ns_contact[:id]}] HubSpot contact updated successfully"
+          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.CONTACT] [COMPLETE] [hs_contact_id: #{updated_contact[:id]}, ns_contact_id: #{ns_contact[:id]}] Contact synchronized successfully"
+        end
+      end
     end
 
     private
@@ -28,19 +32,22 @@ module Hubspot::Deal::NetsuiteContactHelper
 
         raise "Netsuite Contact ID & email are blank in Hubspot contact details" if ns_contact_id.blank? && email.blank?
 
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.CONTACT] [START] [hs_contact_id: #{hs_contact_details[:hs_object_id][:value]}] Initiating contact synchronization"
         if ns_contact_id.present?
-          info_log("Searching Netsuite Contact by id")
+          Rails.logger.info "[INFO] [API.NETSUITE.CONTACT] [SEARCH] [contact_id: #{ns_contact_id}] Searching netsuite contact with id"
           ns_contact = Netsuite::Contact.find_by_id(id: ns_contact_id)
 
-          if ns_contact.present?
-            info_log("Found Netsuite Contact by id #{ns_contact_id}")
+          if object_present_with_id?(ns_contact)
+            Rails.logger.info "[INFO] [API.NETSUITE.CONTACT] [SEARCH] [contact_id: #{ns_contact[:id]}] Netsuite contact found with id"
             return "found by netsuite_contact_id"
+          else
+            Rails.logger.info "[INFO] [API.NETSUITE.CONTACT] [SEARCH] [contact_id: #{ns_contact_id}] Netsuite contact not found with id"
           end
         end
 
         if email.present?
           payload = payload_to_create_netsuit_contact(hs_contact_details)
-          find_or_create_ns_contact_by_emai(payload, email)
+          find_or_create_ns_contact_by_email(payload, email)
         end
       end
 
