@@ -1,3 +1,5 @@
+<% if @ns_estimate.present? %>
 <%= render "estimate_summary", 
       title: "NS Estimate Created Successfully with parent deal",
       ns_estimate_id: @ns_estimate[:id] %>
+<% end %>

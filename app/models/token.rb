@@ -9,6 +9,10 @@ class Token < ApplicationRecord
     expires_at < Time.current
   end
 
+  def self.valid_netsuite_token
+    netsuite.valid.first
+  end
+
   def expires_in_seconds
     return 0 if expired?
     (expires_at - Time.current).to_i

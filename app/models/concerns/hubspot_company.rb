@@ -12,6 +12,7 @@ module HubspotCompany
       else
         Rails.logger.info "[INFO] [API.HUBSPOT.COMPANY] [SEARCH] [filters: #{filters}] HubSpot company not found"
         raise "Hubspot Company not found" if raise_error
+        nil
       end
     end
 

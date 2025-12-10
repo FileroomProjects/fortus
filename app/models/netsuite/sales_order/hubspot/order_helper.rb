@@ -8,7 +8,7 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
   included do
     def update_or_create_hubspot_order
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [START] [sales_order_id: #{args[:sales_order][:id]}] Initiating sales order synchronization"
-      hs_order = find_hubspot_order
+      hs_order = find_hs_order(order_filters)
       return update_hubspot_order(hs_order) if object_present_with_id?(hs_order)
 
       created_order = create_hubspot_order
@@ -29,11 +29,6 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [CREATE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Order created succesfully"
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [COMPLETE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Sales Order synchronized successfully"
       hs_order
-    end
-
-    def find_hubspot_order
-      payload = build_search_payload(order_filters)
-      Hubspot::Order.search(payload)
     end
 
     private

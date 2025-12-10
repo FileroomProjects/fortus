@@ -34,6 +34,9 @@ class NetsuiteController < ApplicationController
 
       Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ sales_order_id: #{sales_order_id} }] Completed sales_order-order sync workflow"
       render json: { success: true }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      render json: { error: e.message }, status: :unauthorized
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ sales_order_id: #{sales_order_id} }] Sales_order-order sync workflow failed: #{e.class}: #{e.message}"
       render json: { error: e.message }, status: :internal_server_error
@@ -50,6 +53,9 @@ class NetsuiteController < ApplicationController
 
       Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ estimate_id: #{estimate_id} }] Completed estimate-child_deal sync workflow"
       render json: { success: true }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      render json: { error: e.message }, status: :unauthorized
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ estimate_id: #{estimate_id} }] Estimate-child_deal sync workflow failed: #{e.class}: #{e.message}"
       render json: { error: e.message }, status: :internal_server_error
@@ -66,6 +72,9 @@ class NetsuiteController < ApplicationController
 
       Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] Completed opportunity-deal sync workflow"
       render json: { success: true }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      render json: { error: e.message }, status: :unauthorized
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ opportunity_id: #{opportunity_id} }] Opportunity-deal sync workflow failed: #{e.class}: #{e.message}"
       render json: { error: e.message }, status: :internal_server_error

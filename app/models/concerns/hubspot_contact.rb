@@ -12,6 +12,7 @@ module HubspotContact
       else
         Rails.logger.info "[INFO] [API.HUBSPOT.CONTACT] [SEARCH] [filters: #{filters}] HubSpot contact not found"
         raise "Hubspot Contact not found" if raise_error
+        nil
       end
     end
 

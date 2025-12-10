@@ -11,6 +11,7 @@ module HubspotDeal
       else
         Rails.logger.info "[INFO] [API.HUBSPOT.DEAL] [SEARCH] [filters: #{filters}] HubSpot deal not found"
         raise "Hubspot DEAL not found" if raise_error
+        nil
       end
     end
 

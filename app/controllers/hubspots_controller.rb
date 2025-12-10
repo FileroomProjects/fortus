@@ -11,6 +11,9 @@ class HubspotsController < ApplicationController
 
       Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed deal-opportunity sync workflow"
       render json: { success: true }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      render json: { error: e.message }, status: :unauthorized
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] Deal-opportunity sync workflow failed: #{e.class}: #{e.message}"
       render json: { error: e.message }, status: :internal_server_error
@@ -31,9 +34,23 @@ class HubspotsController < ApplicationController
       end
       Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed NetSuite estimate creation"
       respond_to { |format| format.html }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      respond_to do |format|
+        format.html do
+          flash[:alert] = e.message
+          redirect_to root_path
+        end
+        format.json { render json: { error: "Authentication failed", message: e.message }, status: :unauthorized }
+      end
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] NetSuite estimate creation failed: #{e.class}: #{e.message}"
-      render json: { error: e.message }, status: :internal_server_error
+      respond_to do |format|
+        format.html do
+          flash[:alert] = "NetSuite estimate creation failed: #{e.class}: #{e.message}"
+        end
+        format.json { render json: { error: "NetSuite estimate creation failed", message: e.message }, status: :internal_server_error }
+      end
     end
   end
 
@@ -51,9 +68,24 @@ class HubspotsController < ApplicationController
       end
       Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed duplicate NetSuite estimate creation"
       respond_to { |format| format.html }
+
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      respond_to do |format|
+        format.html do
+          flash[:alert] = e.message
+          redirect_to root_path
+        end
+        format.json { render json: { error: "Authentication failed", message: e.message }, status: :unauthorized }
+      end
     rescue => e
       Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] Duplicate NetSuite estimate creation failed: #{e.class}: #{e.message}"
-      render json: { error: e.message }, status: :internal_server_error
+      respond_to do |format|
+        format.html do
+          flash[:alert] = "Duplicate NetSuite estimate creation failed: #{e.class}: #{e.message}"
+        end
+        format.json { render json: { error: "Duplicate NetSuite estimate creation failed", message: e.message }, status: :internal_server_error }
+      end
     end
   end
 

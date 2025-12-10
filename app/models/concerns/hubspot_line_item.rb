@@ -101,11 +101,21 @@ module HubspotLineItem
         response = Hubspot::LineItem.remove_line_item_association(hs_item_id, from_object_id, from_object_type)
 
         raise "Failed to remove line item with ID #{hs_item_id}" unless response == "success"
+        if response == "success"
+          Rails.logger.info "[INFO] [API.HUBSPOT.ASSOCIATION] [DELETE] [line_item_id: #{hs_item_id}, #{from_object_type}_id: #{from_object_id}] Line item association removed successfully"
+        else
+          raise "Failed to remove association of line item with ID #{hs_item_id} to #{from_object_type} with ID #{from_object_id}"
+        end
       end
 
       def associate_line_item(line_item_id, object_id, object_type, association_type)
         payload = payload_to_associate(line_item_id, object_id, association_type)
-        Hubspot::LineItem.associate_line_item(payload, object_type)
+        results = Hubspot::LineItem.associate_line_item(payload, object_type)
+        if results.present?
+          Rails.logger.info "[INFO] [API.HUBSPOT.ASSOCIATION] [CREATE] [line_item_id: #{line_item_id}, #{object_type}_id: #{object_id}] Line item associated successfully"
+        else
+          raise "Failed to associate line item with ID #{line_item_id} to #{object_type} with ID #{object_id}"
+        end
       end
 
       def line_item_search_filters(item, existing_ids)

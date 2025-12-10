@@ -23,7 +23,9 @@ module Netsuite::SalesOrder::Hubspot::DealHelper
 
     def update_child_deal
       payload = payload_to_update_child_deal
-      update_hs_deal(payload)
+      hs_deal = update_hs_deal(payload)
+      Rails.logger.info "[INFO] [API.HUBSPOT.DEAL] [UPDATE] [deal_id: #{hs_deal[:id]}] Deal updated successfully"
+      hs_deal
     end
 
     private
