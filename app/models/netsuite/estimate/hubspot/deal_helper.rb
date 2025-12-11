@@ -15,6 +15,8 @@ module Netsuite::Estimate::Hubspot::DealHelper
 
   included do
     def find_or_create_hubspot_parent_deal
+      return nil if args[:opportunity].blank?
+
       hs_deal = find_hubspot_parent_deal
 
       return hs_deal if object_present_with_id?(hs_deal)
