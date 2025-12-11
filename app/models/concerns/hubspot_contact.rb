@@ -11,7 +11,7 @@ module HubspotContact
 
       if object_present_with_id?(contact)
         Rails.logger.info "[INFO] [API.HUBSPOT.CONTACT] [SEARCH] [contact_id: #{contact[:id]}] HubSpot contact found."
-        contact
+        return contact
       end
 
       Rails.logger.info "[INFO] [API.HUBSPOT.CONTACT] [SEARCH] [filters: #{filters}] HubSpot contact not found"

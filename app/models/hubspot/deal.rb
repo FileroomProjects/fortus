@@ -24,6 +24,12 @@ module Hubspot
       deal&.with_indifferent_access
     end
 
+    # Fetch child deals associated with a parent deal.
+    def self.child_deals(parent_deal_id)
+      client = Hubspot::Client.new(body: { from_object_id: parent_deal_id })
+      client.fetch_object_by_associated_object_id("deals", "deals")
+    end
+
     # Return the company associated with this deal.
     def associated_company
       Hubspot::Company.find_by_deal_id(deal_id)

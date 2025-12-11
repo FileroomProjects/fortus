@@ -26,12 +26,14 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
 
     # Update an existing HubSpot child deal.
     def update_hubspot_child_deal(hs_deal)
+      @version = hs_deal[:properties][:version]
       hs_deal = update_hs_deal(payload_to_update_deal(hs_deal))
       hs_child_deal_sync_success_log(hs_deal, "UPDATE", args[:estimateId])
     end
 
     # Create a new HubSpot child deal with properties and associations based on the NetSuite estimate.
     def create_hubspot_child_deal
+      @version = find_child_deal_version(@hs_parent_deal) if @hs_parent_deal.present?
       hs_deal = create_hs_deal(payload_to_create_child_deal)
       hs_child_deal_sync_success_log(hs_deal, "CREATE", args[:estimateId])
     end
@@ -49,7 +51,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
           deal_id: hs_deal[:id],
           "amount": args[:total],
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
-          "dealname": "#{args[:estimateId]} #{args[:title]}"
+          "dealname": deal_name
         }
       end
 
@@ -69,7 +71,8 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
           "amount": args[:total],
           "netsuite_location": netsuite_estimate_location(args[:estimateId]),
           "netsuite_origin": "netsuite",
-          "is_child": "true"
+          "is_child": "true",
+          "version": @version.to_s || "1"
         }
       end
 
@@ -90,7 +93,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       end
 
       def deal_name
-        "#{args[:estimateId]} #{args[:title]}"
+        "#{args[:title]} - #{args[:estimateId]} - v#{@version || 1}"
       end
   end
 end
