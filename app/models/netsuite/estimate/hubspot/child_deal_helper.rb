@@ -2,48 +2,45 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
   extend ActiveSupport::Concern
 
   STATUS_TO_STAGE_ID = {
-    "10" => 1979552193, # Open
-    "14" => 1979552199 # Closed Lost
+    "10" => Hubspot::Constants::NETSUITE_QUOTE_OPEN_STAGE,
+    "14" => Hubspot::Constants::NETSUITE_QUOTE_CLOSED_LOST_STAGE
   }.freeze
 
-
-  DEAL_TO_CONTACT = 3
-  DEAL_TO_COMPANY = 5
-  DEAL_TO_DEAL = 451
-
   included do
+    # Ensure a HubSpot child deal exists for this NetSuite estimate.
+    # If a matching HS child deal exists, update it; otherwise create a new one.
     def update_or_create_hubspot_child_deal
-      existing_deal = find_hubspot_child_deal
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [START] [estimate_id: #{args[:estimateId]}] Initiating estimate synchronization"
+      existing_deal = find_hubspot_child_deal
 
       return update_hubspot_child_deal(existing_deal) if object_present_with_id?(existing_deal)
 
       create_hubspot_child_deal
     end
 
+    # Search for an existing HubSpot child deal using NetSuite estimate id and pipeline.
+    # Returns the found deal object or nil (does not raise when not found).
     def find_hubspot_child_deal
-      find_hs_deal(child_deal_search_filter, raise_error: false)
+      find_hs_deal(child_deal_search_filters, raise_error: false)
     end
 
+    # Update an existing HubSpot child deal.
     def update_hubspot_child_deal(hs_deal)
       hs_deal = update_hs_deal(payload_to_update_deal(hs_deal))
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [UPDATE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Deal updated successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [COMPLETE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Estimate synchronized successfully"
-      hs_deal
+      hs_child_deal_sync_success_log(hs_deal, "UPDATE", args[:estimateId])
     end
 
+    # Create a new HubSpot child deal with properties and associations based on the NetSuite estimate.
     def create_hubspot_child_deal
       hs_deal = create_hs_deal(payload_to_create_child_deal)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [CREATE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Deal created successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.ESTIMATE] [COMPLETE] [estimate_id: #{args[:estimateId]}, deal_id: #{hs_deal[:id]}] Estimate synchronized successfully"
-      hs_deal
+      hs_child_deal_sync_success_log(hs_deal, "CREATE", args[:estimateId])
     end
 
     private
-      def child_deal_search_filter
+      def child_deal_search_filters
         [
           build_search_filter("netsuite_quote_id", "EQ", args[:estimateId]),
-          build_search_filter("pipeline", "EQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "EQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 
@@ -66,7 +63,7 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       def child_deal_base_properties
         {
           "dealname": deal_name,
-          "pipeline": ENV["HUBSPOT_DEFAULT_PIPELINE"],
+          "pipeline": Hubspot::Constants::NETSUITE_QUOTE_PIPELINE,
           "dealstage": STATUS_TO_STAGE_ID[args[:status]],
           "netsuite_quote_id": args[:estimateId],
           "amount": args[:total],
@@ -84,11 +81,11 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
 
       def child_deal_associations_list
         list = [
-          association(@hs_contact[:id], DEAL_TO_CONTACT),
-          association(@hs_company[:id], DEAL_TO_COMPANY)
+          association(@hs_contact[:id], Hubspot::Constants::DEAL_TO_CONTACT),
+          association(@hs_company[:id], Hubspot::Constants::DEAL_TO_COMPANY)
         ]
 
-        list << association(@hs_parent_deal[:id], DEAL_TO_DEAL) if @hs_parent_deal.present?
+        list << association(@hs_parent_deal[:id], Hubspot::Constants::DEAL_TO_DEAL) if @hs_parent_deal.present?
         list
       end
 

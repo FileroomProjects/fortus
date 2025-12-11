@@ -18,17 +18,13 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
     def update_hubspot_order(hs_order)
       payload = prepare_payload_for_hubspot_order_update(hs_order)
       hs_order = update_hs_order(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [UPDATE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Order updated succesfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [COMPLETE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Sales Order synchronized successfully"
-      hs_order
+      hs_order_sync_success_log(hs_order, "UPDATE", args[:sales_order][:id])
     end
 
     def create_hubspot_order
       payload = prepare_payload_for_hubspot_order
       hs_order = create_hs_order(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [CREATE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Order created succesfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [COMPLETE] [sales_order_id: #{args[:sales_order][:id]}, order_id: #{hs_order[:id]}] Sales Order synchronized successfully"
-      hs_order
+      hs_order_sync_success_log(hs_order, "CREATE", args[:sales_order][:id])
     end
 
     private

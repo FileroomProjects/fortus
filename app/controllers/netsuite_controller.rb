@@ -1,4 +1,5 @@
 class NetsuiteController < ApplicationController
+  include NetsuiteSync
   protect_from_forgery with: :null_session
 
   # GET /netsuite/callback
@@ -25,60 +26,33 @@ class NetsuiteController < ApplicationController
   end
 
   def sync_order
-    # validate_sync_order_params(%w[sales_order customer opportunity items])
-    Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [START] [{ sales_order_id: #{sales_order_id} }] Starting sales_order-order sync workflow"
-
-    begin
-      netsuite = Netsuite::SalesOrder.new(params["netsuite"])
-      netsuite.sync_sales_order_with_hubspot
-
-      Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ sales_order_id: #{sales_order_id} }] Completed sales_order-order sync workflow"
-      render json: { success: true }
-    rescue ActionController::InvalidAuthenticityToken => e
-      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
-      render json: { error: e.message }, status: :unauthorized
-    rescue => e
-      Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ sales_order_id: #{sales_order_id} }] Sales_order-order sync workflow failed: #{e.class}: #{e.message}"
-      render json: { error: e.message }, status: :internal_server_error
-    end
+    perform_netsuite_sync(
+      netsuite_class: Netsuite::SalesOrder,
+      sync_method: :sync_sales_order_with_hubspot,
+      required: %w[sales_order customer opportunity items],
+      label: "salesOrder-order",
+      context: { sales_order_id: params["netsuite"]["sales_order"]["id"] }
+    )
   end
 
   def sync_estimate
-    # validate_sync_order_params(%w[estimateId customer contact items])
-    Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [START] [{ estimate_id: #{estimate_id} }] Starting estimate-child_deal sync workflow"
-
-    begin
-      netsuite = Netsuite::Estimate.new(params["netsuite"])
-      netsuite.sync_ns_estimate_with_hs_child_deal
-
-      Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ estimate_id: #{estimate_id} }] Completed estimate-child_deal sync workflow"
-      render json: { success: true }
-    rescue ActionController::InvalidAuthenticityToken => e
-      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
-      render json: { error: e.message }, status: :unauthorized
-    rescue => e
-      Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ estimate_id: #{estimate_id} }] Estimate-child_deal sync workflow failed: #{e.class}: #{e.message}"
-      render json: { error: e.message }, status: :internal_server_error
-    end
+    perform_netsuite_sync(
+      netsuite_class: Netsuite::Estimate,
+      sync_method: :sync_ns_estimate_with_hs_child_deal,
+      required: %w[estimateId customer contact items],
+      label: "estimate-deal",
+      context: { estimate_id: params["netsuite"]["estimateId"] }
+    )
   end
 
-  def sync_deal
-    # validate_sync_order_params(%w[opportunity])
-    Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [START] [{ opportunity_id: #{opportunity_id} }] Starting opportunity-deal sync workflow"
-
-    begin
-      netsuite = Netsuite::Opportunity.new(params["netsuite"])
-      netsuite.sync_opportunity_with_deal
-
-      Rails.logger.info "[INFO] [CONTROLLER.NETSUITE] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] Completed opportunity-deal sync workflow"
-      render json: { success: true }
-    rescue ActionController::InvalidAuthenticityToken => e
-      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
-      render json: { error: e.message }, status: :unauthorized
-    rescue => e
-      Rails.logger.error "[ERROR] [CONTROLLER.NETSUITE] [FAIL] [{ opportunity_id: #{opportunity_id} }] Opportunity-deal sync workflow failed: #{e.class}: #{e.message}"
-      render json: { error: e.message }, status: :internal_server_error
-    end
+  def sync_opportunity
+    perform_netsuite_sync(
+      netsuite_class: Netsuite::Opportunity,
+      sync_method: :sync_opportunity_with_deal,
+      required: %w[opportunity],
+      label: "opportunity-deal",
+      context: { opportunity_id: params["netsuite"]["opportunity_id"] }
+    )
   end
 
   private
@@ -108,17 +82,5 @@ class NetsuiteController < ApplicationController
         end
         format.json { render json: { error: "Authentication failed", message: error_message }, status: :internal_server_error }
       end
-    end
-
-    def sales_order_id
-      params["netsuite"]["sales_order"]["id"]
-    end
-
-    def estimate_id
-      params["netsuite"]["estimateId"]
-    end
-
-    def opportunity_id
-      params["netsuite"]["opportunity_id"]
     end
 end

@@ -2,19 +2,21 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
   extend ActiveSupport::Concern
 
   included do
+    # Ensure a HubSpot company exists for the NetSuite customer.
+    # - Returns the updated or newly created HubSpot company object, or nil when no customer id is present.
     def update_or_create_hubspot_company
       return nil unless args[:customer][:id].present?
 
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [START] [customer_id: #{args[:customer][:id]}] Initiating customer synchronization"
       hs_company = find_hubspot_company
-      if object_present_with_id?(hs_company)
-        update_hubspot_company(hs_company)
-      else
-        create_hubspot_company
-      end
+
+      return update_hubspot_company(hs_company) if object_present_with_id?(hs_company)
+
+      create_hubspot_company
     end
 
-    # Try to find by id first, then by name; stop on first match
+    # Find a HubSpot company for the current NetSuite customer.
+    # Searches by NetSuite company id first, then by company name; returns the first match or nil.
     def find_hubspot_company
       [
         [ :id,   :build_company_filter_with_id ],
@@ -31,17 +33,13 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
     def update_hubspot_company(hs_company)
       payload = payload_to_update_hubspot_company(hs_company[:id])
       hs_company = update_hs_company(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [UPDATE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Company updated successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [COMPLETE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Customer synchronized successfully"
-      hs_company
+      hs_company_sync_success_log(hs_company, "UPDATE", args[:customer][:id])
     end
 
     def create_hubspot_company
       payload = payload_to_create_hubspot_company
       hs_company = create_hs_company(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [CREATE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Company created successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CUSTOMER] [COMPLETE] [customer_id: #{args[:customer][:id]}, company_id: #{hs_company[:id]}] Customer synchronized successfully"
-      hs_company
+      hs_company_sync_success_log(hs_company, "CREATE", args[:customer][:id])
     end
 
     private

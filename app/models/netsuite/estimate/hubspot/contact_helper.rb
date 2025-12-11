@@ -2,6 +2,8 @@ module Netsuite::Estimate::Hubspot::ContactHelper
   extend ActiveSupport::Concern
 
   included do
+    # Ensure a HubSpot contact exists for the NetSuite contact.
+    # - Returns the updated or newly created HubSpot contact, or nil when no contact id is present.
     def update_or_create_hubspot_contact
       return nil unless args[:contact][:id].present?
 
@@ -14,7 +16,8 @@ module Netsuite::Estimate::Hubspot::ContactHelper
       end
     end
 
-    # Try to find by id first, then by email; return first match
+    # Find a HubSpot contact for the current NetSuite contact.
+    # Searches by NetSuite contact id first, then by email; returns the first match or nil.
     def find_hubspot_contact
       [
         [ :id,    :build_contact_filter_with_id ],
@@ -31,17 +34,13 @@ module Netsuite::Estimate::Hubspot::ContactHelper
     def update_hubspot_contact(hs_contact)
       payload = payload_to_update_hubspot_contact(hs_contact[:id])
       hs_contact = update_hs_contact(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [UPDATE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Hubspot Contact updated successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [COMPLETE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Netsuite Contact synchronized successfully"
-      hs_contact
+      hs_contact_sync_success_log(hs_contact, "UPDATE", args[:contact][:id])
     end
 
     def create_hubspot_contact
       payload = payload_to_create_hubspot_contact
       hs_contact = create_hs_contact(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [CREATE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Hubspot Contact created successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.CONTACT] [COMPLETE] [ns_contact_id: #{args[:contact][:id]}, hs_contact_id: #{hs_contact[:id]}] Nestuite Contact synchronized successfully"
-      hs_contact
+      hs_contact_sync_success_log(hs_contact, "CREATE", args[:contact][:id])
     end
 
     private

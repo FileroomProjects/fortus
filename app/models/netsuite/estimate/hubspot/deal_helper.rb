@@ -6,14 +6,10 @@ module Netsuite::Estimate::Hubspot::DealHelper
     "14" => 1979552199 # Closed Lost
   }.freeze
 
-
-  DEAL_TO_CONTACT = 3
-  DEAL_TO_COMPANY = 5
-  DEAL_TO_DEAL = 451
-  HUBSPOT_SALES_TEAM_PIPELINE = 666164048
-  HUBSPOT_SALES_TEAM_INTRODUCTION_STAGE = 977956704
-
   included do
+    # Ensure a HubSpot parent deal exists for the NetSuite opportunity.
+    # - Returns the existing HubSpot deal when found, otherwise creates and returns a new one.
+    # - Returns nil if no NetSuite opportunity data is present in `args`.
     def find_or_create_hubspot_parent_deal
       return nil if args[:opportunity].blank?
 
@@ -24,24 +20,23 @@ module Netsuite::Estimate::Hubspot::DealHelper
       create_hubspot_parent_deal
     end
 
+    # Search for a HubSpot parent deal sinced with NetSuite opportunity.
     def find_hubspot_parent_deal
       find_hs_deal(parent_deal_search_filter, raise_error: false)
     end
 
+    # Create a new HubSpot parent deal using NetSuite opportunity fields.
     def create_hubspot_parent_deal
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [START] [opportunity_id: #{args[:opportunity][:id]}] Initiating opportunity synchronization"
       hs_deal = create_hs_deal(payload_to_create_parent_deal)
-
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Deal created successfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [COMPLETE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Opportunity synchronized successfully"
-      hs_deal
+      hs_deal_sync_success_log(hs_deal, "CREATE", args[:opportunity][:id])
     end
 
     private
       def parent_deal_search_filter
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
-          build_search_filter("pipeline", "NEQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "NEQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 
@@ -55,8 +50,8 @@ module Netsuite::Estimate::Hubspot::DealHelper
       def parent_deal_base_properties
         {
           "dealname": args[:opportunity][:title],
-          "pipeline": HUBSPOT_SALES_TEAM_PIPELINE,
-          "dealstage": HUBSPOT_SALES_TEAM_INTRODUCTION_STAGE,
+          "pipeline": Hubspot::Constants::SALES_TEAM_PIPELINE,
+          "dealstage": Hubspot::Constants::SALES_TEAM_INTRODUCTION_STAGE,
           "netsuite_opportunity_id": args[:opportunity][:id],
           "amount": args[:opportunity][:projectedTotal],
           "closedate": args[:opportunity][:expectedClose],
@@ -66,8 +61,8 @@ module Netsuite::Estimate::Hubspot::DealHelper
       end
 
       def child_deal_associations_list
-        association(@hs_contact[:id], DEAL_TO_CONTACT)
-        association(@hs_company[:id], DEAL_TO_COMPANY)
+        association(@hs_contact[:id], Hubspot::Constants::DEAL_TO_CONTACT)
+        association(@hs_company[:id], Hubspot::Constants::DEAL_TO_COMPANY)
       end
   end
 end

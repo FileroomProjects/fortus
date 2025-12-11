@@ -13,16 +13,13 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
       ns_customer = find_or_create_netsuite_customer(hs_company_details)
 
-      return if ns_customer == "found by netsuite_company_id" # No need to update hubspot company
+      return if ns_customer == "found by id" # No need to update hubspot company
 
-      if object_present_with_id?(ns_customer)
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [CREATE] [company_id: #{hs_company_details[:hs_object_id][:value]}, customer_id: #{ns_customer[:id]}] Netsuite customer created successfully"
-        updated_company = update_hubspot_company(hs_company_details, ns_customer)
-        if object_present_with_id?(updated_company)
-          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [UPDATE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] HubSpot company updated successfully"
-          Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [COMPLETE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] Company synchronized successfully"
-        end
-      end
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [CREATE] [company_id: #{company_id(hs_company_details)}, customer_id: #{ns_customer[:id]}] Netsuite customer created successfully"
+      updated_company = update_hubspot_company(hs_company_details, ns_customer)
+
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [UPDATE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] HubSpot company updated successfully"
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [COMPLETE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] Company synchronized successfully"
     end
 
     private
@@ -32,29 +29,24 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
         raise "Netsuite Company ID & name are blank in Hubspot company details" if ns_company_id.blank? && company_name.blank?
 
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [START] [company_id: #{hs_company_details[:hs_object_id][:value]}] Initiating company synchronization"
-        if ns_company_id.present?
-          Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_company_id}] Searching netsuite customer with id"
-          ns_customer = Netsuite::Customer.find_by(columnName: "id", value: ns_company_id)
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [START] [company_id: #{company_id(hs_company_details)}] Initiating company synchronization"
 
-          if object_present_with_id?(ns_customer)
-            Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_customer[:id]}] Netsuite customer found with id"
-            return "found by netsuite_company_id"
-          else
-            Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [customer_id: #{ns_company_id}] Netsuite customer not found with id"
-          end
-        end
+        return "found by id" if ns_company_id.present? && ns_customer_found_by_id?(ns_company_id)
 
-        if company_name.present?
-          find_or_create_ns_customer_by_company_name(company_name)
-        end
+        return find_or_create_ns_customer_by_company_name(company_name) if company_name.present?
+
+        raise "Netsuite Company name is missing in Hubspot company details & no customer was found by netsuite_company_id: #{ns_company_id}"
       end
 
       def update_hubspot_company(hs_company_details, ns_customer)
         update_hs_company({
-          companyId: hs_company_details[:hs_object_id][:value],
+          companyId: company_id(hs_company_details),
           "netsuite_company_id": (ns_customer[:id])
         })
+      end
+
+      def company_id(hs_company_details)
+        hs_company_details[:hs_object_id]&.fetch("value", "")
       end
   end
 end

@@ -7,16 +7,14 @@ module Netsuite::Opportunity::Hubspot::DealHelper
       hs_deal = find_hs_deal(deal_filters)
       payload = payload_to_update_deal(hs_deal[:id])
       hs_deal = update_hs_deal(payload)
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Deal updated succesfully"
-      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [COMPLETE] [opportunity_id: #{args[:opportunity][:id]}, deal_id: #{hs_deal[:id]}] Opportunity synchronized successfully"
-      hs_deal
+      hs_deal_sync_success_log(hs_deal, "UPDATE", args[:opportunity][:id])
     end
 
     private
       def deal_filters
         [
           build_search_filter("netsuite_opportunity_id", "EQ", args[:opportunity][:id]),
-          build_search_filter("pipeline", "NEQ", ENV["HUBSPOT_DEFAULT_PIPELINE"])
+          build_search_filter("pipeline", "NEQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
         ]
       end
 

@@ -1,4 +1,5 @@
 class HubspotsController < ApplicationController
+  include NsEstimateCreation
   protect_from_forgery with: :null_session
   before_action :load_deal, only: [ :create_duplicate_ns_quote, :create_ns_quote ]
 
@@ -22,71 +23,12 @@ class HubspotsController < ApplicationController
 
   def create_ns_quote
     Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting NetSuite estimate creation"
-    Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [START] [deal_id: #{deal_id}] Initiating child deal synchronization"
-
-    begin
-      payload = @hubspot.prepare_payload_for_netsuite_estimate
-      @ns_estimate = @hubspot.create_ns_estimate(payload)
-
-      if @ns_estimate[:id].present?
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [CREATE] [deal_id: #{deal_id}, estimate_id: #{@ns_estimate[:id]}] Estimate created succesfully"
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, estimate_id: #{@ns_estimate[:id]}] Child deal synchronized successfully"
-      end
-      Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed NetSuite estimate creation"
-      respond_to { |format| format.html }
-    rescue ActionController::InvalidAuthenticityToken => e
-      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
-      respond_to do |format|
-        format.html do
-          flash[:alert] = e.message
-          redirect_to root_path
-        end
-        format.json { render json: { error: "Authentication failed", message: e.message }, status: :unauthorized }
-      end
-    rescue => e
-      Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] NetSuite estimate creation failed: #{e.class}: #{e.message}"
-      respond_to do |format|
-        format.html do
-          flash[:alert] = "NetSuite estimate creation failed: #{e.class}: #{e.message}"
-        end
-        format.json { render json: { error: "NetSuite estimate creation failed", message: e.message }, status: :internal_server_error }
-      end
-    end
+    perform_ns_estimate_creation(@hubspot, :prepare_payload_for_netsuite_estimate, "NetSuite estimate")
   end
 
   def create_duplicate_ns_quote
     Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting duplicate NetSuite estimate creation"
-    Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [START] [deal_id: #{deal_id}] Initiating child deal synchronization"
-
-    begin
-      payload = @hubspot.prepare_payload_for_duplicate_netsuite_estimate
-      @ns_estimate = @hubspot.create_ns_estimate(payload)
-
-      if @ns_estimate[:id].present?
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [CREATE] [deal_id: #{deal_id}, estimate_id: #{@ns_estimate[:id]}] Estimate created succesfully"
-        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, estimate_id: #{@ns_estimate[:id]}] Child deal synchronized successfully"
-      end
-      Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed duplicate NetSuite estimate creation"
-      respond_to { |format| format.html }
-
-    rescue ActionController::InvalidAuthenticityToken => e
-      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
-      respond_to do |format|
-        format.html do
-          flash[:alert] = e.message
-          redirect_to root_path
-        end
-        format.json { render json: { error: "Authentication failed", message: e.message }, status: :unauthorized }
-      end
-    rescue => e
-      Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] Duplicate NetSuite estimate creation failed: #{e.class}: #{e.message}"
-      respond_to do |format|
-        format.html do
-          flash[:alert] = "Duplicate NetSuite estimate creation failed: #{e.class}: #{e.message}"
-        end
-        format.json { render json: { error: "Duplicate NetSuite estimate creation failed", message: e.message }, status: :internal_server_error }
-      end
-    end
+    perform_ns_estimate_creation(@hubspot, :prepare_payload_for_duplicate_netsuite_estimate, "Duplicate NetSuite estimate")
   end
 
   private
