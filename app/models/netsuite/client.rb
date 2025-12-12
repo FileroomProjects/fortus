@@ -45,6 +45,15 @@ module Netsuite
       { id: object_id }
     end
 
+    def update_object(object_name, object_id)
+      response = patch_request("#{BASE_URL}/#{object_name}/#{object_id}", body, headers)
+
+      handle_error(object_name, response) unless response.code == 204
+
+      object_id = response.headers[:location].split("/").last if response.headers[:location].present?
+      { id: object_id }
+    end
+
     def fetch_estimate_items(estimate_id)
       response = get_request("#{BASE_URL}/estimate/#{estimate_id}?expandSubResources=true", headers)
 

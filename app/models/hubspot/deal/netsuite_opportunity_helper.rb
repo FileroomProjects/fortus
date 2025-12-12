@@ -13,7 +13,9 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
       ns_opportunity = find_ns_opportunity_with_id(@netsuite_opportunity_id)
 
-      create_netsuite_opportunity_and_update_hubspot_deal unless object_present_with_id?(ns_opportunity)
+      return  update_netsuite_opportunity(ns_opportunity) if object_present_with_id?(ns_opportunity)
+
+      create_netsuite_opportunity_and_update_hubspot_deal
     end
 
     def create_netsuite_opportunity_and_update_hubspot_deal
@@ -26,6 +28,16 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       update_hs_deal({ deal_id: deal_id, "netsuite_opportunity_id": ns_opportunity[:id] })
 
       Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] HubSpot deal updated successfully"
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Opportunity synchronized successfully"
+
+      ns_opportunity
+    end
+
+    def update_netsuite_opportunity(ns_opportunity)
+      payload = prepare_payload_for_netsuite_opportunity_update
+      ns_opportunity = update_ns_opportunity(payload, ns_opportunity[:id], deal_id)
+
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Netsuite opportunity updated successfully"
       Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Opportunity synchronized successfully"
 
       ns_opportunity
@@ -71,6 +83,13 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
       def request_quote_triggered?
         fetch_prop_field(:request_quote_triggered) == "true"
+      end
+
+
+      def prepare_payload_for_netsuite_opportunity_update
+        {
+          "custbody61": fetch_prop_field(:request_quote_notes)
+        }
       end
   end
 end

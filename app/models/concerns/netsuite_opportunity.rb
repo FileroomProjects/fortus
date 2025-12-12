@@ -21,5 +21,12 @@ module NetsuiteOpportunity
       opportunity = Netsuite::Opportunity.create(payload)
       process_response("Netsuite Opportunity", "create", opportunity)
     end
+
+    # Update a NetSuite opportunity using the given payload.
+    def update_ns_opportunity(payload, ns_opportunity_id, deal_id)
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [START] [deal_id: #{deal_id}] Initiating deal synchronization"
+      opportunity = Netsuite::Opportunity.update(payload, ns_opportunity_id)
+      process_response("Netsuite Opportunity", "update", opportunity)
+    end
   end
 end
