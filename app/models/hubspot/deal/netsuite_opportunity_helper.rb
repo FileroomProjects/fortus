@@ -9,7 +9,10 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
     ].freeze
 
     def find_or_create_netsuite_opportunity
-      create_netsuite_opportunity_and_update_hubspot_deal if @netsuite_opportunity_id.blank?
+      if @netsuite_opportunity_id.blank?
+        create_netsuite_opportunity_and_update_hubspot_deal
+        return
+      end
 
       ns_opportunity = find_ns_opportunity_with_id(@netsuite_opportunity_id)
 
