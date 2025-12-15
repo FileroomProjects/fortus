@@ -63,8 +63,6 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
           "probability": fetch_prop_field(:hs_deal_stage_probability).to_f * 100, # Probability must be equal to or greater than 1.
           "entity": { "id": netsuite_company_id, "type": "customer" },
           "contact": { "id": netsuite_contact_id, "type": "contact" },
-          "currency": { "id": "2", "type": "currency" },
-          "exchangeRate": 1.0,
           "isBudgetApproved": false,
           "canHaveStackable": false,
           "shipIsResidential": false,
