@@ -62,9 +62,9 @@ module Netsuite
       JSON.parse(response.parsed_response)
     end
 
-    def fetch_locations_by_subsidiary(subsidiary_id)
-      url = "#{BASE_URL}/location?q=subsidiary.id==#{subsidiary_id}"
-      response = get_request(url, headers)
+    def fetch_locations
+      query_str = "SELECT id, subsidiary FROM location WHERE isinactive = 'F'"
+      response = post_request(SUITEQL_URL, { q: query_str }, headers_with_prefer)
 
       handle_error("location", response) unless response.code == 200
 
