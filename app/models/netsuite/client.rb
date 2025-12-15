@@ -62,6 +62,15 @@ module Netsuite
       JSON.parse(response.parsed_response)
     end
 
+    def fetch_locations_by_subsidiary(subsidiary_id)
+      url = "#{BASE_URL}/location?q=subsidiary.id==#{subsidiary_id}"
+      response = get_request(url, headers)
+
+      handle_error("location", response) unless response.code == 200
+
+      JSON.parse(response.parsed_response)
+    end
+
     private
       def search_contact(query_str)
         response = search_query("#{BASE_URL}/contact", { q: query_str, limit: 1, offset: 0 }, headers)
