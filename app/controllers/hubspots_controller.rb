@@ -40,6 +40,7 @@ class HubspotsController < ApplicationController
         Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] NetSuite note created successfully"
         render json: { success: true, response: response }
       else
+        puts "response: #{response}"
         Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ opportunity_id: #{opportunity_id} }] NetSuite note creation failed: #{response[:error]}"
         render json: { error: response[:error] }, status: :internal_server_error
       end
