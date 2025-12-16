@@ -20,8 +20,8 @@ module Netsuite
       opportunity_id_int = opportunity_id.to_s.match?(/^\d+$/) ? opportunity_id.to_i : opportunity_id
       
       payload = {
-        opportunity_id: 4449568,
-        note: 'hello'
+        opportunity_id: opportunity_id_int,
+        note: note
       }
       payload[:title] = title if title.present?
       
