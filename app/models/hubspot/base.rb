@@ -2,7 +2,7 @@ module Hubspot
   class Base
     require "ostruct"
     attr_accessor :args, :properties, :deal_id
-    include IntegrationCommon
+    include BaseConcern
 
     def initialize(params)
       @args = params.as_json.with_indifferent_access

@@ -8,7 +8,7 @@
       ✅ Connected to NetSuite
     </div>
     
-    <% token_record = Token.netsuite_token %>
+    <% token_record = Token.valid_netsuite_token %>
     <% if token_record %>
       <p><strong>Token expires:</strong> <%= token_record.expires_at.strftime('%Y-%m-%d %H:%M:%S') %></p>
       <p><strong>Expires in:</strong> <%= token_record.expires_in_seconds %> seconds</p>
@@ -71,5 +71,3 @@
     font-family: monospace;
   }
 </style>
-
-</script>

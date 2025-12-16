@@ -10,14 +10,16 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
     def handle_company_and_update_hubspot
       hs_company_details = associated_company_details # fetch from hs
-      raise "Hubspot Company details are blank" unless hs_company_details.present?
 
-      Rails.logger.info "************** Fetched Hubspot company details"
       ns_customer = find_or_create_netsuite_customer(hs_company_details)
 
-      return if ns_customer == "found by netsuite_company_id" # No need to update hubspot company
+      return if ns_customer == "found by id" # No need to update hubspot company
 
-      update_hubspot_company(hs_company_details, ns_customer) if object_present_with_id?(ns_customer)
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [CREATE] [company_id: #{company_id(hs_company_details)}, customer_id: #{ns_customer[:id]}] Netsuite customer created successfully"
+      updated_company = update_hubspot_company(hs_company_details, ns_customer)
+
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [UPDATE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] HubSpot company updated successfully"
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [COMPLETE] [company_id: #{updated_company[:id]}, customer_id: #{ns_customer[:id]}] Company synchronized successfully"
     end
 
     private
@@ -27,45 +29,24 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
         raise "Netsuite Company ID & name are blank in Hubspot company details" if ns_company_id.blank? && company_name.blank?
 
-        if ns_company_id.present?
-          Rails.logger.info "************** Searching Netsuite Customer by id"
-          ns_customer = Netsuite::Customer.find_by(columnName: "id", value: ns_company_id)
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [START] [company_id: #{company_id(hs_company_details)}] Initiating company synchronization"
 
-          if ns_customer.present?
-            Rails.logger.info "************** Found Netsuite Customer by id #{ns_company_id}"
-            return "found by netsuite_company_id"
-          end
-        end
+        return "found by id" if ns_company_id.present? && ns_customer_found_by_id?(ns_company_id)
 
-        if company_name.present?
-          find_or_create_customer_by_company_name(company_name)
-        end
-      end
+        return find_or_create_ns_customer_by_company_name(company_name) if company_name.present?
 
-      def find_or_create_customer_by_company_name(company_name)
-        Rails.logger.info "************** Searching Netsuite Customer by company name"
-        ns_customer = Netsuite::Customer.find_by(columnName: "companyname", value: company_name)
-        return ns_customer if ns_customer.present?
-
-        Rails.logger.info "************** Creating Netsuite Customer"
-        create_customer(company_name)
+        raise "Netsuite Company name is missing in Hubspot company details & no customer was found by netsuite_company_id: #{ns_company_id}"
       end
 
       def update_hubspot_company(hs_company_details, ns_customer)
-        Rails.logger.info "************** Updating hubspot company with netsuite_company_id #{ns_customer[:id]}"
-        Hubspot::Company.update({
-          companyId: hs_company_details[:hs_object_id][:value],
+        update_hs_company({
+          companyId: company_id(hs_company_details),
           "netsuite_company_id": (ns_customer[:id])
         })
       end
 
-      def create_customer(company_name)
-        Netsuite::Customer.create(
-          "companyName": company_name,
-          "subsidiary": { "id": "22", "refName": "Fortus USA" },
-          "category": { "id": "13", "refName": "4. Competitor - DEKK" },
-          "custentity11": { "id": "80", "refName": "Aston - FU" }
-        )
+      def company_id(hs_company_details)
+        hs_company_details[:hs_object_id]&.fetch("value", "")
       end
   end
 end

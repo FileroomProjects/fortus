@@ -1,6 +1,7 @@
 module Hubspot
   class Contact < Hubspot::Base
     def self.find_by_deal_id(deal_id)
+      # Return the contact associated with a deal (select primary when available).
       client = Hubspot::Client.new(body: { from_object_id: deal_id })
       contacts = client.fetch_object_by_associated_object_id("deals", "contacts")
 
@@ -11,6 +12,7 @@ module Hubspot
     end
 
     def self.find_by_id(id)
+      # Retrieve contact properties for a given HubSpot contact id.
       url = "/contacts/v1/contact/vid/#{id}/profile"
       client = Hubspot::Client.new(body: {})
 
@@ -19,6 +21,7 @@ module Hubspot
     end
 
     def self.update(args = {})
+      # Update a HubSpot contact using the provided arguments.
       client = Hubspot::Client.new(body: args)
 
       contact = client.update_contact
@@ -26,13 +29,22 @@ module Hubspot
     end
 
     def self.search(args = {})
+      # Search HubSpot contacts and return the first result.
       client = Hubspot::Client.new(body: args)
 
       contact = client.search_object("contacts")
       contact&.with_indifferent_access
     end
 
+    def self.create(args = {})
+      # Create a new HubSpot contact and return the created object.
+      client = Hubspot::Client.new(body: args)
+      contact = client.create_objects("contacts")
+      contact&.with_indifferent_access
+    end
+
     private
+      # From an array of associated contacts, prefer the one labelled Primary Contact.
       def self.selected_contact(contacts)
         primary_contact = contacts.find do |contact|
           contact["associationTypes"].any? { |a| a["label"] == "Primary Contact" }

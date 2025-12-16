@@ -2,7 +2,7 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
   extend ActiveSupport::Concern
 
   included do
-    QUOTES_STAGES = [
+    ESTIMATE_STAGES = [
       { label: "Open", id: "1979552193" },
       { label: "Closed Won", id: "1979552198" },
       { label: "Closed Lost", id: "1979552199" }
@@ -10,40 +10,45 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
     def find_or_create_netsuite_opportunity
       if @netsuite_opportunity_id.blank?
-        ns_opportunity = create_netsuite_opportunity_and_update_hubspot_deal
-        return ns_opportunity
+        create_netsuite_opportunity_and_update_hubspot_deal
+        return
       end
 
-      netsuite_opportunity = Netsuite::Opportunity.show(@netsuite_opportunity_id)
-      if netsuite_opportunity.present?
-        Rails.logger.info "************** Netsuite Opportunity already exists with ID #{netsuite_opportunity[:id]}"
-      else
-        create_netsuite_opportunity_and_update_hubspot_deal
-      end
+      ns_opportunity = find_ns_opportunity_with_id(@netsuite_opportunity_id)
+
+      return  update_netsuite_opportunity(ns_opportunity) if object_present_with_id?(ns_opportunity)
+
+      create_netsuite_opportunity_and_update_hubspot_deal
     end
 
     def create_netsuite_opportunity_and_update_hubspot_deal
-      Rails.logger.info "************** Creating Netsuite Opportunity"
-
       payload = prepare_payload_for_netsuite_opportunity
-      ns_opportunity = Netsuite::Opportunity.create(payload)
-
-      unless object_present_with_id?(ns_opportunity)
-        raise "Failed to create Netsuite Opportunity"
-      end
+      ns_opportunity = create_ns_oppportunity(payload, deal_id)
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [CREATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Netsuite opportunity created successfully"
 
       @netsuite_opportunity_id = ns_opportunity[:id]
 
-      Rails.logger.info "************** Created Netsuite Opportunity with ID #{ns_opportunity[:id]}"
-      Rails.logger.info "************** Updating Hubspot deal with netsuite_opportunity_id #{ns_opportunity[:id]}"
+      update_hs_deal({ deal_id: deal_id, "netsuite_opportunity_id": ns_opportunity[:id] })
 
-      update({ "netsuite_opportunity_id": ns_opportunity[:id] })
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] HubSpot deal updated successfully"
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Opportunity synchronized successfully"
+
+      ns_opportunity
+    end
+
+    def update_netsuite_opportunity(ns_opportunity)
+      payload = prepare_payload_for_netsuite_opportunity_update
+      ns_opportunity = update_ns_opportunity(payload, ns_opportunity[:id], deal_id)
+
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Netsuite opportunity updated successfully"
+      Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.DEAL] [COMPLETE] [deal_id: #{deal_id}, opportunity_id: #{ns_opportunity[:id]}] Opportunity synchronized successfully"
+
       ns_opportunity
     end
 
     private
-      def get_stage_from_quotes_pl(stage_code)
-        Hubspot::Deal::QUOTES_STAGES.select { |a| a[:id] == stage_code }.first[:label]
+      def get_stage_from_pl(stage_code)
+        Hubspot::Deal::ESTIMATE_STAGES.select { |a| a[:id] == stage_code }.first[:label]
       end
 
       def prepare_payload_for_netsuite_opportunity
@@ -58,8 +63,6 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
           "probability": fetch_prop_field(:hs_deal_stage_probability).to_f * 100, # Probability must be equal to or greater than 1.
           "entity": { "id": netsuite_company_id, "type": "customer" },
           "contact": { "id": netsuite_contact_id, "type": "contact" },
-          "currency": { "id": "2", "type": "currency" },
-          "exchangeRate": 1.0,
           "isBudgetApproved": false,
           "canHaveStackable": false,
           "shipIsResidential": false,
@@ -81,6 +84,13 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
       def request_quote_triggered?
         fetch_prop_field(:request_quote_triggered) == "true"
+      end
+
+
+      def prepare_payload_for_netsuite_opportunity_update
+        {
+          "custbody61": fetch_prop_field(:request_quote_notes)
+        }
       end
   end
 end

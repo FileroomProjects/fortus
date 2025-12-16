@@ -7,6 +7,11 @@ module Netsuite
       client.create_object("opportunity")
     end
 
+    def self.update(args = {}, ns_opportunity_id)
+      client = Netsuite::Client.new(args)
+      client.update_object("opportunity", ns_opportunity_id)
+    end
+
     def self.show(ns_opportunity_id)
       client = Netsuite::Client.new({})
 

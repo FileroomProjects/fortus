@@ -1,5 +1,5 @@
-<%= render "quote_summary", 
-      title: "NS Quote Created Successfully with parent deal",
-      parent_id: @hs_deal[:dealId],
-      deal_id: @hs_deal_child[:id],
-      ns_quote_id: @ns_quote[:id] %>
+<% if @ns_estimate.present? %>
+<%= render "estimate_summary", 
+      title: "NS Estimate Created Successfully with parent deal",
+      ns_estimate_id: @ns_estimate[:id] %>
+<% end %>

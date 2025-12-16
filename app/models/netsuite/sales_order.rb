@@ -4,14 +4,8 @@ module Netsuite
 
     def sync_sales_order_with_hubspot
       find_associated_hubspot_records
-      hs_order = find_hubspot_order
-      if object_present_with_id?(hs_order)
-        hs_order = update_hubspot_order(hs_order)
-        update_parent_deal if object_present_with_id?(hs_order)
-      else
-        hs_order = create_hubspot_order
-        update_parent_and_child_deal
-      end
+      hs_order = update_or_create_hubspot_order
+      update_parent_and_child_deal
       sync_line_items_in_hubspot_order(hs_order) if object_present_with_id?(hs_order)
     end
 

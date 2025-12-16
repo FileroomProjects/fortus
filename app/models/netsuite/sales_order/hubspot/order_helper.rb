@@ -5,22 +5,26 @@ module Netsuite::SalesOrder::Hubspot::OrderHelper
   ORDER_TO_DEAL    = 512
   ORDER_TO_COMPANY = 509
 
-  include Netsuite::Hubspot::OrderHelper
-
   included do
+    def update_or_create_hubspot_order
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.SALES_ORDER] [START] [sales_order_id: #{args[:sales_order][:id]}] Initiating sales order synchronization"
+      hs_order = find_hs_order(order_filters)
+      return update_hubspot_order(hs_order) if object_present_with_id?(hs_order)
+
+      created_order = create_hubspot_order
+      created_order
+    end
+
     def update_hubspot_order(hs_order)
       payload = prepare_payload_for_hubspot_order_update(hs_order)
-      update_order(payload)
+      hs_order = update_hs_order(payload)
+      hs_order_sync_success_log(hs_order, "UPDATE", args[:sales_order][:id])
     end
 
     def create_hubspot_order
       payload = prepare_payload_for_hubspot_order
-      create_order(payload)
-    end
-
-    def find_hubspot_order
-      payload = build_search_payload(order_filters)
-      Hubspot::Order.search(payload)
+      hs_order = create_hs_order(payload)
+      hs_order_sync_success_log(hs_order, "CREATE", args[:sales_order][:id])
     end
 
     private

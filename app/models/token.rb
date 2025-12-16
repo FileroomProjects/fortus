@@ -9,6 +9,10 @@ class Token < ApplicationRecord
     expires_at < Time.current
   end
 
+  def self.valid_netsuite_token
+    netsuite.valid.first
+  end
+
   def expires_in_seconds
     return 0 if expired?
     (expires_at - Time.current).to_i
@@ -18,6 +22,7 @@ class Token < ApplicationRecord
     netsuite.first
   end
 
+    # Create or update the stored NetSuite access token.
   def self.update_netsuite_token(access_token:, refresh_token: nil, expires_in: nil)
     token = netsuite.first_or_initialize
 

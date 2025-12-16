@@ -3,7 +3,7 @@ module Netsuite
     require "ostruct"
 
     include HTTParty
-    include IntegrationCommon
+    include BaseConcern
 
     attr_accessor :args
 
@@ -56,6 +56,7 @@ module Netsuite
 
     private
       def self.refresh_access_token
+        Rails.logger.warn "[WARN] [AUTH.NETSUITE] [RETRY] [provider:netsuite] Token expired, refreshing access token"
         token_record = Token.netsuite_token
         # return unless token_record&.refresh_token
 
@@ -69,7 +70,9 @@ module Netsuite
           headers: headers
         })
 
-        raise "Token refresh failed: #{response.body}" unless response.success?
+        unless response.success?
+          raise ActionController::InvalidAuthenticityToken, "Token refresh failed: #{response.body}"
+        end
 
         token_data = response.parsed_response
 

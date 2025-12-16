@@ -28,7 +28,9 @@ module Hubspot
     def create_association(from_object_type, to_object_type)
       response = post("/crm/v3/associations/#{from_object_type}/#{to_object_type}/batch/create", body)
 
-      handle_created_responce(response)
+      handle_error(response) unless response.code == 201
+
+      response.parsed_response["results"]
     end
 
     def search_object(object_type)
