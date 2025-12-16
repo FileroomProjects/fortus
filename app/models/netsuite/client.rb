@@ -62,6 +62,15 @@ module Netsuite
       JSON.parse(response.parsed_response)
     end
 
+    def fetch_locations
+      query_str = "SELECT id, subsidiary FROM location WHERE isinactive = 'F'"
+      response = post_request(SUITEQL_URL, { q: query_str }, headers_with_prefer)
+
+      handle_error("location", response) unless response.code == 200
+
+      JSON.parse(response.parsed_response)
+    end
+
     private
       def search_contact(query_str)
         response = search_query("#{BASE_URL}/contact", { q: query_str, limit: 1, offset: 0 }, headers)

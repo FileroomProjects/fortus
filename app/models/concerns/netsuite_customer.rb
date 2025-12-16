@@ -36,6 +36,12 @@ module NetsuiteCustomer
       process_response("Netsuite Customer", "create", customer)
     end
 
+    def fetch_ns_customer(customer_id)
+      Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [FETCH] [customer_id: #{customer_id}] Fetching netsuite customer details"
+      customer = Netsuite::Customer.show(customer_id)
+      process_response("Netsuite Customer details", "fetched", customer)
+    end
+
     private
       # Build a default payload for creating a NetSuite customer.
       def create_customer_payload(company_name)

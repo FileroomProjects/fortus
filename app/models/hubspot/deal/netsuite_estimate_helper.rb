@@ -2,7 +2,6 @@ module Hubspot::Deal::NetsuiteEstimateHelper
   extend ActiveSupport::Concern
 
   included do
-    NETSUITE_LOCATION_ID = "80"
     NETSUITE_CASE_TYPE_ID = "6"
     NETSUITE_ORIGIN_REF_NAME  = "Opportunity "
 
@@ -37,10 +36,13 @@ module Hubspot::Deal::NetsuiteEstimateHelper
       ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
       raise "netsuite_company_id is not present in hubspot company details" if ns_company_id.blank?
       raise "netsuite_contact_id is not present in hubspot contact details" if ns_contact_id.blank?
+      ns_location_id = find_ns_location_id_by_customer_id(ns_company_id)
+      raise "ns_location_id is not present in netsuite company details" if ns_location_id.blank?
+
       {
         "entity": { "id": ns_company_id }, # Customer
         "custbody_so_title": fetch_prop_field(:dealname), # Title
-        "location": { "id": NETSUITE_LOCATION_ID },
+        "location": { "id": ns_location_id },
         "custbody34": Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"), # Incident Date/ Time
         "custbody20": { refName: NETSUITE_ORIGIN_REF_NAME }, # Origin
         "opportunity": { "id": @netsuite_opportunity_id },

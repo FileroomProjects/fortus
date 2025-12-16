@@ -9,7 +9,10 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
     ].freeze
 
     def find_or_create_netsuite_opportunity
-      create_netsuite_opportunity_and_update_hubspot_deal if @netsuite_opportunity_id.blank?
+      if @netsuite_opportunity_id.blank?
+        create_netsuite_opportunity_and_update_hubspot_deal
+        return
+      end
 
       ns_opportunity = find_ns_opportunity_with_id(@netsuite_opportunity_id)
 
@@ -60,8 +63,6 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
           "probability": fetch_prop_field(:hs_deal_stage_probability).to_f * 100, # Probability must be equal to or greater than 1.
           "entity": { "id": netsuite_company_id, "type": "customer" },
           "contact": { "id": netsuite_contact_id, "type": "contact" },
-          "currency": { "id": "2", "type": "currency" },
-          "exchangeRate": 1.0,
           "isBudgetApproved": false,
           "canHaveStackable": false,
           "shipIsResidential": false,
