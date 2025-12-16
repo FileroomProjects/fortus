@@ -26,6 +26,27 @@ class HubspotsController < ApplicationController
     perform_ns_estimate_creation(@hubspot, :prepare_payload_for_netsuite_estimate, "NetSuite estimate")
   end
 
+  def create_ns_note
+    opportunity_id = params["properties"]["netsuite_opportunity_id"]["value"]
+    note = params["properties"]["request_quote_notes"]["value"]
+    if opportunity_id.present? || note.present?
+      restlet = Netsuite::RestletNote.new
+      response = restlet.create_note(
+        opportunity_id: opportunity_id,
+        note: note,
+        title: note  # optional
+      )
+      if response[:success]
+        Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] NetSuite note created successfully"
+        render json: { success: true, response: response }
+      else
+        Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ opportunity_id: #{opportunity_id} }] NetSuite note creation failed: #{response[:error]}"
+        render json: { error: response[:error] }, status: :internal_server_error
+      end
+    end
+  end
+
+
   def create_duplicate_ns_quote
     Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting duplicate NetSuite estimate creation"
     perform_ns_estimate_creation(@hubspot, :prepare_payload_for_duplicate_netsuite_estimate, "Duplicate NetSuite estimate")

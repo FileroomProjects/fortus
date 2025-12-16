@@ -21,5 +21,6 @@ Rails.application.routes.draw do
     post :create_contact_customer
     get :create_ns_quote
     get :create_duplicate_ns_quote
+    post :create_ns_note
   end
 end
