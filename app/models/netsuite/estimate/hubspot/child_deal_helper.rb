@@ -47,10 +47,16 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       end
 
       def payload_to_update_deal(hs_deal)
+        case args[:status]
+        when "10"
+          dealstage = '1979552193'
+        when "14"
+          dealstage = '1979552199'
+        end
         {
           deal_id: hs_deal[:id],
           "amount": args[:total],
-          "dealstage": STATUS_TO_STAGE_ID[args[:status]],
+          "dealstage": dealstage,
           "dealname": deal_name
         }
       end
@@ -63,10 +69,16 @@ module Netsuite::Estimate::Hubspot::ChildDealHelper
       end
 
       def child_deal_base_properties
+        case args[:status]
+        when "10"
+          dealstage = '1979552193'
+        when "14"
+          dealstage = '1979552199'
+        end
         {
           "dealname": deal_name,
           "pipeline": Hubspot::Constants::NETSUITE_QUOTE_PIPELINE,
-          "dealstage": STATUS_TO_STAGE_ID[args[:status]],
+          "dealstage": dealstage,
           "netsuite_quote_id": args[:estimateId],
           "amount": args[:total],
           "netsuite_location": netsuite_estimate_location(args[:estimateId]),
