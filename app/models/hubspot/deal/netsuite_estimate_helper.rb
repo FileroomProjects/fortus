@@ -36,7 +36,7 @@ module Hubspot::Deal::NetsuiteEstimateHelper
       ns_contact_id = hs_contact_details[:netsuite_contact_id]&.fetch("value", "")
       raise "netsuite_company_id is not present in hubspot company details" if ns_company_id.blank?
       raise "netsuite_contact_id is not present in hubspot contact details" if ns_contact_id.blank?
-      ns_location_id = find_ns_location_id_by_customer_id(ns_company_id)
+      ns_location_id = find_ns_location_id(ns_company_id)
       raise "ns_location_id is not present in netsuite company details" if ns_location_id.blank?
 
       {
