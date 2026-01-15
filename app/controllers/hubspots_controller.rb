@@ -27,8 +27,8 @@ class HubspotsController < ApplicationController
   end
 
   def create_ns_note
-    opportunity_id = params["properties"]["netsuite_opportunity_id"]["value"]
-    note = params["properties"]["request_quote_notes"]["value"]
+    opportunity_id = params["properties"]["netsuite_opportunity_id"]["value"] rescue nil
+    note = params["properties"]["request_quote_notes"]["value"] rescue nil
     if opportunity_id.present? || note.present?
       restlet = Netsuite::RestletNote.new
       response = restlet.create_note(
