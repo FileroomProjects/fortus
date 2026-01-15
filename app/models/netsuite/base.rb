@@ -54,6 +54,20 @@ module Netsuite
       token_record.access_token
     end
 
+    # Public method to proactively refresh access token
+    # Can be called from rake tasks or scheduled jobs
+    def self.refresh_token_proactively
+      token_record = Token.netsuite_token
+      unless token_record&.refresh_token
+        Rails.logger.warn "[WARN] [AUTH.NETSUITE] [SKIP] [provider:netsuite] No refresh token available"
+        return false
+      end
+
+      Rails.logger.info "[INFO] [AUTH.NETSUITE] [REFRESH] [provider:netsuite] Proactively refreshing access token"
+      refresh_access_token
+      true
+    end
+
     private
       def self.refresh_access_token
         Rails.logger.warn "[WARN] [AUTH.NETSUITE] [RETRY] [provider:netsuite] Token expired, refreshing access token"
