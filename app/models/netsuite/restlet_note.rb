@@ -32,6 +32,7 @@ module Netsuite
       # Always get a fresh token right before the API call (critical on Heroku)
       # Don't rely on cached token - get it fresh from database
       access_token = get_fresh_token_for_request
+      original_token = access_token.dup # Store full token for comparison
       original_token_preview = access_token[0..20]
       
       # RESTlet headers - some RESTlets may require additional headers
@@ -65,17 +66,26 @@ module Netsuite
           Rails.logger.info "[INFO] [RESTLET.NETSUITE] [RETRY] Token refresh successful, getting new token"
           # Small delay to ensure token is fully committed to database
           sleep(0.5) if Rails.env.production?
-          # Force database reload to get fresh token
+          # Force database reload to get fresh token - use find_by to bypass any caching
           ActiveRecord::Base.connection.clear_query_cache
-          Token.netsuite_token&.reload
-          access_token = get_fresh_token_for_request
-          new_token_preview = access_token[0..20]
-          
-          # Verify we got a different token
-          if new_token_preview == original_token_preview
-            Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [RETRY] WARNING: Token appears to be the same after refresh!"
+          # Get token directly from database without using scope (to avoid caching)
+          token_record = Token.where(provider: "netsuite").order(created_at: :desc).first
+          if token_record
+            token_record.reload
+            access_token = token_record.access_token
+            new_token_preview = access_token[0..20]
+            
+          # Compare full tokens to verify they're different
+          if access_token == original_token
+            Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] Token is identical to original - NetSuite may have returned same token"
+            Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] This suggests the token is valid but RESTlet authentication is failing"
+            Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] Please verify RESTlet deployment is configured for OAuth 2.0 Token-Based Authentication"
           else
             Rails.logger.info "[INFO] [RESTLET.NETSUITE] [RETRY] New token obtained (first 20 chars): #{new_token_preview}... (different from original)"
+          end
+          else
+            Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [RETRY] No token record found after refresh!"
+            access_token = get_fresh_token_for_request
           end
           
           headers["Authorization"] = "Bearer #{access_token}"
@@ -94,10 +104,20 @@ module Netsuite
       parsed_response = response.parsed_response || response.body
       
       unless response.code.to_i.between?(200, 299)
+        error_message = parsed_response.is_a?(Hash) ? parsed_response["error"] || parsed_response["message"] : parsed_response
+        
+        # If we get INVALID_LOGIN_ATTEMPT after retry, it's likely a RESTlet configuration issue
+        if response.code.to_i == 401 && parsed_response.is_a?(Hash) && parsed_response.dig("error", "code") == "INVALID_LOGIN_ATTEMPT"
+          Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [AUTH] RESTlet authentication failed with INVALID_LOGIN_ATTEMPT"
+          Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [AUTH] Token is valid but RESTlet is rejecting it - this indicates a RESTlet deployment configuration issue"
+          Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [AUTH] Please verify in NetSuite: Customization > Scripting > Script Deployments > customdeploy1"
+          Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [AUTH] Authentication must be set to 'OAuth 2.0 Token-Based Authentication'"
+        end
+        
         return { 
           "success" => false,
           "error" => "HTTP #{response.code}", 
-          "message" => parsed_response.is_a?(Hash) ? parsed_response["error"] || parsed_response["message"] : parsed_response,
+          "message" => error_message,
           "http_code" => response.code,
           "raw_response" => parsed_response
         }
