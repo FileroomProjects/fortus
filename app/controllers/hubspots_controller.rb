@@ -30,19 +30,27 @@ class HubspotsController < ApplicationController
     opportunity_id = params["properties"]["netsuite_opportunity_id"]["value"] rescue nil
     note = params["properties"]["request_quote_notes"]["value"] rescue nil
     if opportunity_id.present? || note.present?
-      restlet = Netsuite::RestletNote.new
-      response = restlet.create_note(
-        opportunity_id: opportunity_id,
-        note: note,
-        title: note  # optional
-      )
+      begin
+        # Skip validation on Heroku if it's causing issues - the actual POST call will validate the token
+        skip_validation = Rails.env.production?
+        restlet = Netsuite::RestletNote.new(skip_validation: skip_validation)
+        response = restlet.create_note(
+          opportunity_id: opportunity_id,
+          note: note,
+          title: note  # optional
+        )
 
-      if  response["success"] ==  true
-        Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] NetSuite note created successfully"
-        render json: { success: true, response: response }
-      else
-        Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ opportunity_id: #{opportunity_id} }] NetSuite note creation failed: #{response[:error]}"
-        render json: { error: response[:error] }, status: :internal_server_error
+        if response.is_a?(Hash) && response["success"] == true
+          Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] NetSuite note created successfully"
+          render json: { success: true, response: response }
+        else
+          error_message = response.is_a?(Hash) ? (response["error"] || response["message"] || "Unknown error") : "Invalid response format"
+          Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ opportunity_id: #{opportunity_id} }] NetSuite note creation failed: #{error_message}"
+          render json: { error: error_message, details: response }, status: :internal_server_error
+        end
+      rescue => e
+        Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [EXCEPTION] [{ opportunity_id: #{opportunity_id} }] #{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+        render json: { error: e.message }, status: :internal_server_error
       end
     end
   end

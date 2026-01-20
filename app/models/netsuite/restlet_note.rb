@@ -6,7 +6,7 @@ module Netsuite
     include HTTParty
 
     def initialize(skip_validation: false)
-      @account = ENV['NETSUITE_ACCOUNT_ID'] || '4800298-sb1'
+      @account = '4800298-sb1'
       @script_id = 'customscript3621'
       @deploy_id = 'customdeploy1'
       # Get fresh token - will be refreshed if needed by get_access_token
@@ -26,28 +26,44 @@ module Netsuite
       }
       payload[:title] = title if title.present?
       
-      # Refresh token before API call to ensure it's fresh (especially important on Heroku)
-      refresh_token_if_needed
+      # Always get a fresh token right before the API call (critical on Heroku)
+      # Don't rely on cached token - get it fresh from database
+      access_token = get_fresh_token_for_request
+      
+      # RESTlet headers - some RESTlets may require additional headers
+      headers = {
+        "Authorization" => "Bearer #{access_token}",
+        "Content-Type" => "application/json",
+        "Accept" => "application/json"
+      }
+      
+      Rails.logger.info "[INFO] [RESTLET.NETSUITE] [REQUEST] Calling RESTlet: #{url}"
+      Rails.logger.debug "[DEBUG] [RESTLET.NETSUITE] [PAYLOAD] #{payload.to_json}"
       
       response = HTTParty.post(url, {
         body: payload.to_json,
-        headers: {
-          "Authorization" => "Bearer #{@access_token}",
-          "Content-Type" => "application/json"
-        }
+        headers: headers,
+        timeout: 30
       })
       
-      # If we get a 401, refresh token and retry once
+      Rails.logger.info "[INFO] [RESTLET.NETSUITE] [RESPONSE] Status: #{response.code}, Body: #{response.body[0..200]}"
+      
+      # If we get a 401, force token refresh and retry once
       if response.code.to_i == 401
-        Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] Got 401, refreshing token and retrying"
-        refresh_token
+        Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] Got 401, forcing token refresh and retrying"
+        Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [RETRY] Response body: #{response.body}"
+        
+        # Force a proactive refresh to ensure we get a completely fresh token
+        Netsuite::Base.refresh_token_proactively
+        access_token = get_fresh_token_for_request
+        
+        headers["Authorization"] = "Bearer #{access_token}"
         response = HTTParty.post(url, {
           body: payload.to_json,
-          headers: {
-            "Authorization" => "Bearer #{@access_token}",
-            "Content-Type" => "application/json"
-          }
+          headers: headers,
+          timeout: 30
         })
+        Rails.logger.info "[INFO] [RESTLET.NETSUITE] [RETRY] Status after retry: #{response.code}"
       end
       
       parsed_response = response.parsed_response || response.body
@@ -75,6 +91,21 @@ module Netsuite
 
     private
 
+    def get_fresh_token_for_request
+      # Always get a fresh token from the database right before making the request
+      # This ensures we have the latest token, especially important on Heroku
+      # where there might be connection pooling or timing issues
+      token = Netsuite::Base.get_access_token
+      
+      # Verify token is present
+      unless token.present?
+        Rails.logger.error "[ERROR] [RESTLET.NETSUITE] [TOKEN] No access token available"
+        raise "No NetSuite access token available"
+      end
+      
+      token
+    end
+
     def refresh_token_if_needed
       # Always get fresh token to ensure it's in sync with database
       # get_access_token will refresh if expired or about to expire
@@ -90,22 +121,25 @@ module Netsuite
       url = "https://#{@account}.app.netsuite.com/app/site/hosting/restlet.nl?script=#{@script_id}&deploy=#{@deploy_id}"
       
       # Always get fresh token before validation to ensure it's valid
-      @access_token = Netsuite::Base.get_access_token
+      access_token = get_fresh_token_for_request
       
       response = HTTParty.get(url, {
         headers: {
-          "Authorization" => "Bearer #{@access_token}"
-        }
+          "Authorization" => "Bearer #{access_token}"
+        },
+        timeout: 30
       })
       
       # If we get a 401, try refreshing token and retry once
       if response.code.to_i == 401
         Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [VALIDATION] Got 401 during validation, refreshing token and retrying"
-        refresh_token
+        Netsuite::Base.refresh_token_proactively
+        access_token = get_fresh_token_for_request
         response = HTTParty.get(url, {
           headers: {
-            "Authorization" => "Bearer #{@access_token}"
-          }
+            "Authorization" => "Bearer #{access_token}"
+          },
+          timeout: 30
         })
       end
       
