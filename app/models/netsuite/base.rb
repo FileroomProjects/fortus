@@ -42,7 +42,7 @@ module Netsuite
     # Get current access token (refreshes if expired)
     # Automatically refreshes token if it has expired or is about to expire (< 5 minutes)
     def self.get_access_token
-      token_record = Token.last
+      token_record = Token.netsuite_token
       return nil unless token_record&.access_token
 
       # Refresh if expired or about to expire
