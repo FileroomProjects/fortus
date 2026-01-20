@@ -9,6 +9,7 @@ module Netsuite
       @account = ENV['NETSUITE_ACCOUNT_ID'] || '4800298-sb1'
       @script_id = 'customscript3621'
       @deploy_id = 'customdeploy1'
+      # Get fresh token - will be refreshed if needed by get_access_token
       @access_token = Netsuite::Base.get_access_token
       
       validate_restlet_endpoint! unless skip_validation
@@ -75,13 +76,9 @@ module Netsuite
     private
 
     def refresh_token_if_needed
-      token_record = Token.netsuite_token
-      return unless token_record
-      
-      # Refresh if expired or about to expire (within 5 minutes)
-      if token_record.expired? || token_record.expires_in_seconds < 300
-        refresh_token
-      end
+      # Always get fresh token to ensure it's in sync with database
+      # get_access_token will refresh if expired or about to expire
+      @access_token = Netsuite::Base.get_access_token
     end
 
     def refresh_token
@@ -92,14 +89,25 @@ module Netsuite
     def validate_restlet_endpoint!
       url = "https://#{@account}.app.netsuite.com/app/site/hosting/restlet.nl?script=#{@script_id}&deploy=#{@deploy_id}"
       
-      # Refresh token before validation
-      refresh_token_if_needed
+      # Always get fresh token before validation to ensure it's valid
+      @access_token = Netsuite::Base.get_access_token
       
       response = HTTParty.get(url, {
         headers: {
           "Authorization" => "Bearer #{@access_token}"
         }
       })
+      
+      # If we get a 401, try refreshing token and retry once
+      if response.code.to_i == 401
+        Rails.logger.warn "[WARN] [RESTLET.NETSUITE] [VALIDATION] Got 401 during validation, refreshing token and retrying"
+        refresh_token
+        response = HTTParty.get(url, {
+          headers: {
+            "Authorization" => "Bearer #{@access_token}"
+          }
+        })
+      end
       
       unless response.code.to_i == 200
         raise "RESTlet endpoint error: HTTP #{response.code} - #{response.body}"
