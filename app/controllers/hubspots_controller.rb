@@ -29,29 +29,34 @@ class HubspotsController < ApplicationController
   def create_ns_note
     opportunity_id = params["properties"]["netsuite_opportunity_id"]["value"] rescue nil
     note = params["properties"]["request_quote_notes"]["value"] rescue nil
-    if opportunity_id.present? || note.present?
-      begin
-        # Skip validation on Heroku if it's causing issues - the actual POST call will validate the token
-        skip_validation = Rails.env.production?
-        restlet = Netsuite::RestletNote.new(skip_validation: skip_validation)
-        response = restlet.create_note(
-          opportunity_id: opportunity_id,
-          note: note,
-          title: note  # optional
-        )
+    deal_id = params["properties"]["hs_object_id"]["value"] rescue nil
+    deal_company = HTTParty.get("https://api.hubapi.com/crm/v4/objects/deals/#{deal_id}/associations/companies",:headers => { 'Content-Type' => 'application/json',"Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" })
+    associated_company = deal_company["results"].first["toObjectId"] rescue nil
 
-        if response.is_a?(Hash) && response["success"] == true
-          Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ opportunity_id: #{opportunity_id} }] NetSuite note created successfully"
-          render json: { success: true, response: response }
-        else
-          error_message = response.is_a?(Hash) ? (response["error"] || response["message"] || "Unknown error") : "Invalid response format"
-          Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ opportunity_id: #{opportunity_id} }] NetSuite note creation failed: #{error_message}"
-          render json: { error: error_message, details: response }, status: :internal_server_error
-        end
-      rescue => e
-        Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [EXCEPTION] [{ opportunity_id: #{opportunity_id} }] #{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
-        render json: { error: e.message }, status: :internal_server_error
-      end
+
+    netsuite_customer = HTTParty.get("https://api.hubspot.com/crm/v3/objects/companies/#{associated_company}?properties=netsuite_company_id",:headers => { 'Content-Type' => 'application/json',"Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }) rescue nil
+
+    netsuite_customer_id = netsuite_customer["properties"]["netsuite_company_id"] rescue nil
+    if opportunity_id.present? && netsuite_customer_id.present? && note.present?
+      body = {
+        title: note,
+        message: note,
+        priority: "HIGH",
+        dueDate: (Date.today+1.day).strftime("%Y-%m-%d"),
+        timedEvent: true,
+        company: { id: netsuite_customer_id },
+        transaction: { id: opportunity_id }
+      }
+      ass_response = HTTParty.post(
+      "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/task",
+      body: body.to_json,
+      headers: {
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{Netsuite::Base.get_access_token}"
+      }
+    )
+    else
+      render json: { error: "No opportunity or note found" }, status: :not_found
     end
   end
 

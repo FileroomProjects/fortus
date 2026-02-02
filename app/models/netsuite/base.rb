@@ -74,11 +74,15 @@ module Netsuite
         token_record = Token.netsuite_token
         # return unless token_record&.refresh_token
 
+        client_id = ENV["NETSUITE_CLIENT_ID"]
+        Rails.logger.info "[INFO] [AUTH.NETSUITE] [REFRESH] Using Client ID: #{client_id&.[](0..10)}..." if client_id
+        Rails.logger.info "[INFO] [AUTH.NETSUITE] [REFRESH] Token URL: #{token_url}"
+
         response = HTTParty.post(token_url, {
           body: {
             grant_type: "refresh_token",
             refresh_token: token_record.refresh_token,
-            client_id: ENV["NETSUITE_CLIENT_ID"],
+            client_id: client_id,
             client_secret: ENV["NETSUITE_CLIENT_SECRET"]
           },
           headers: headers
