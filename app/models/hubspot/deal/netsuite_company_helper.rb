@@ -26,6 +26,7 @@ module Hubspot::Deal::NetsuiteCompanyHelper
       def find_or_create_netsuite_customer(hs_company_details)
         ns_company_id = hs_company_details[:netsuite_company_id]&.fetch("value", "")
         company_name = hs_company_details[:name]&.fetch("value", "")
+        company_category = hs_company_details[:category]&.fetch("value", "")
 
         raise "Netsuite Company ID & name are blank in Hubspot company details" if ns_company_id.blank? && company_name.blank?
 
@@ -33,7 +34,7 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
         return "found by id" if ns_company_id.present? && ns_customer_found_by_id?(ns_company_id)
 
-        return find_or_create_ns_customer_by_company_name(company_name) if company_name.present?
+        return find_or_create_ns_customer_by_company_name(company_name,company_category) if company_name.present?
 
         raise "Netsuite Company name is missing in Hubspot company details & no customer was found by netsuite_company_id: #{ns_company_id}"
       end

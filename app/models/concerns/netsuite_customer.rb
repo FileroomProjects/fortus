@@ -3,7 +3,7 @@ module NetsuiteCustomer
 
   included do
     # Find a NetSuite customer by company name or create one if missing.
-    def find_or_create_ns_customer_by_company_name(company_name)
+    def find_or_create_ns_customer_by_company_name(company_name,company_category)
       Rails.logger.info "[INFO] [API.NETSUITE.CUSTOMER] [SEARCH] [company_name: #{company_name}] Searching netsuite customer with company name"
       customer = Netsuite::Customer.find_by(columnName: "companyname", value: company_name)
 
@@ -13,7 +13,7 @@ module NetsuiteCustomer
       end
 
       Rails.logger.info "[INFO] [API.HUBSPOT.CUSTOMER] [SEARCH] [company_name: #{company_name}] Hubspot customer not found with company name"
-      create_ns_customer(company_name)
+      create_ns_customer(company_name,company_category)
     end
 
     def ns_customer_found_by_id?(ns_company_id)
@@ -30,8 +30,8 @@ module NetsuiteCustomer
     end
 
     # Create a NetSuite customer using a default payload based on company name.
-    def create_ns_customer(company_name)
-      payload = create_customer_payload(company_name)
+    def create_ns_customer(company_name,company_category)
+      payload = create_customer_payload(company_name,company_category)
       customer = Netsuite::Customer.create(payload)
       process_response("Netsuite Customer", "create", customer)
     end
@@ -44,12 +44,13 @@ module NetsuiteCustomer
 
     private
       # Build a default payload for creating a NetSuite customer.
-      def create_customer_payload(company_name)
+      def create_customer_payload(company_name,company_category)
         {
           "companyName": company_name,
           "subsidiary": { "id": "22", "refName": "Fortus USA" },
           "category": { "id": "13", "refName": "4. Competitor - DEKK" },
-          "custentity11": { "id": "80", "refName": "Aston - FU" }
+          "custentity11": { "id": "80", "refName": "Aston - FU" },
+          "custentity49": { "id": "1", "refName": company_category }
         }
       end
   end
