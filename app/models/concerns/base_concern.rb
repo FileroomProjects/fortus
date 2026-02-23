@@ -72,6 +72,7 @@ module BaseConcern
     end
 
     def process_response(object_name, action, object)
+      sleep 1
       success = object_present_with_id?(object)
 
       unless success
