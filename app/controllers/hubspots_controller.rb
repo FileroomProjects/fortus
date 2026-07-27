@@ -37,15 +37,50 @@ class HubspotsController < ApplicationController
     netsuite_customer = HTTParty.get("https://api.hubspot.com/crm/v3/objects/companies/#{associated_company}?properties=netsuite_company_id",:headers => { 'Content-Type' => 'application/json',"Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }) rescue nil
 
     netsuite_customer_id = netsuite_customer["properties"]["netsuite_company_id"] rescue nil
-    if opportunity_id.present? && netsuite_customer_id.present? && note.present?
+    binding.pry
+    owner_id = params["properties"]["hubspot_owner_id"]["value"] rescue nil
+    if owner_id.present?
+      owner_response = HTTParty.get(
+        "https://api.hubapi.com/crm/v3/owners/#{owner_id}",
+        headers: {
+          "Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}",
+          "Content-Type" => "application/json"
+        }
+      )
+      owner = JSON.parse(owner_response.body)
+      owner_email = owner["email"] rescue nil
+
+      employee_response = HTTParty.get(
+        "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/employee",
+        query: {
+          q: "email IS \"#{owner_email}\""
+        },
+        headers: {
+          "Authorization" => "Bearer #{Netsuite::Base.get_access_token}",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      employee = JSON.parse(employee_response.body)["items"]&.first rescue nil
+      employee_id = employee["id"] if employee
+    end
+    perth_time = Time.find_zone!("Australia/Perth").now
+
+    if opportunity_id.present? && netsuite_customer_id.present? && note.present? && employee_id.present?
+
       body = {
         title: note,
         message: note,
         priority: "HIGH",
-        dueDate: (Date.today+1.day).strftime("%Y-%m-%d"),
         timedEvent: true,
-        company: { id: netsuite_customer_id },
-        transaction: { id: opportunity_id }
+        startDate: perth_time.strftime("%Y-%m-%d"),
+        startTime: perth_time.strftime("%H:%M"),
+        dueDate: perth_time.strftime("%Y-%m-%d"),
+        timezone: "Australia/Perth",
+        assigned: {id: employee_id},
+        company: {id: netsuite_customer_id},
+        transaction: {id: opportunity_id},
+        owner: {id: employee_id}
       }
       ass_response = HTTParty.post(
       "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/task",
@@ -55,6 +90,27 @@ class HubspotsController < ApplicationController
         "Authorization" => "Bearer #{Netsuite::Base.get_access_token}"
       }
     )
+    elsif opportunity_id.present? && netsuite_customer_id.present? && note.present? && employee_id.blank?
+      body = {
+        title: note,
+        message: note,
+        priority: "HIGH",
+        timedEvent: true,
+        startDate: perth_time.strftime("%Y-%m-%d"),
+        startTime: perth_time.strftime("%H:%M"),
+        dueDate: perth_time.strftime("%Y-%m-%d"),
+        timezone: "Australia/Perth",
+        company: {id: netsuite_customer_id},
+        transaction: {id: opportunity_id}
+      }
+      ass_response = HTTParty.post(
+      "https://#{ENV['NETSUITE_ACCOUNT_ID']}.suitetalk.api.netsuite.com/services/rest/record/v1/task",
+      body: body.to_json,
+      headers: {
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{Netsuite::Base.get_access_token}"
+      }
+      )
     else
       render json: { error: "No opportunity or note found" }, status: :not_found
     end
