@@ -37,7 +37,6 @@ class HubspotsController < ApplicationController
     netsuite_customer = HTTParty.get("https://api.hubspot.com/crm/v3/objects/companies/#{associated_company}?properties=netsuite_company_id",:headers => { 'Content-Type' => 'application/json',"Authorization" => "Bearer #{ENV['HUBSPOT_ACCESS_TOKEN']}" }) rescue nil
 
     netsuite_customer_id = netsuite_customer["properties"]["netsuite_company_id"] rescue nil
-    binding.pry
     owner_id = params["properties"]["hubspot_owner_id"]["value"] rescue nil
     if owner_id.present?
       owner_response = HTTParty.get(
@@ -77,7 +76,7 @@ class HubspotsController < ApplicationController
         startTime: perth_time.strftime("%H:%M"),
         dueDate: perth_time.strftime("%Y-%m-%d"),
         timezone: "Australia/Perth",
-        assigned: {id: employee_id},
+        assigned: {id: 169271},
         company: {id: netsuite_customer_id},
         transaction: {id: opportunity_id},
         owner: {id: employee_id}
@@ -99,6 +98,7 @@ class HubspotsController < ApplicationController
         startDate: perth_time.strftime("%Y-%m-%d"),
         startTime: perth_time.strftime("%H:%M"),
         dueDate: perth_time.strftime("%Y-%m-%d"),
+        assigned: {id: 169271},
         timezone: "Australia/Perth",
         company: {id: netsuite_customer_id},
         transaction: {id: opportunity_id}
