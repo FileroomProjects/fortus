@@ -1,7 +1,7 @@
 class HubspotsController < ApplicationController
   include NsEstimateCreation
   protect_from_forgery with: :null_session
-  before_action :load_deal, only: [ :create_duplicate_ns_quote, :create_ns_quote ]
+  before_action :load_deal, only: [ :create_duplicate_ns_quote, :create_ns_quote, :link_netsuite_opportunity ]
 
   def create_contact_customer
     Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting deal-opportunity sync workflow"
@@ -24,6 +24,24 @@ class HubspotsController < ApplicationController
   def create_ns_quote
     Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting NetSuite estimate creation"
     perform_ns_estimate_creation(@hubspot, :prepare_payload_for_netsuite_estimate, "NetSuite estimate")
+  end
+
+  def link_netsuite_opportunity
+    Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [START] [{ deal_id: #{deal_id} }] Starting NetSuite opportunity linking"
+
+    begin
+      opportunity = Netsuite::Opportunity.show(params["opportunityId"])
+      @hubspot.update_from_opportunity(opportunity)
+
+      Rails.logger.info "[INFO] [CONTROLLER.HUBSPOT] [COMPLETE] [{ deal_id: #{deal_id} }] Completed NetSuite opportunity linking"
+      render json: { success: true }
+    rescue ActionController::InvalidAuthenticityToken => e
+      Rails.logger.error "[ERROR] [AUTH.NETSUITE] [FAIL] [provider:netsuite] #{e.message}"
+      render json: { error: e.message }, status: :unauthorized
+    rescue => e
+      Rails.logger.error "[ERROR] [CONTROLLER.HUBSPOT] [FAIL] [{ deal_id: #{deal_id} }] NetSuite opportunity linking failed: #{e.class}: #{e.message}"
+      render json: { error: e.message }, status: :internal_server_error
+    end
   end
 
   def create_ns_note

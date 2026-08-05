@@ -46,6 +46,24 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
       ns_opportunity
     end
 
+    # Link a NetSuite opportunity to this HubSpot deal and sync key fields.
+    def update_from_opportunity(opportunity)
+      raise "Opportunity not found" if opportunity.blank? || opportunity[:id].blank?
+
+      payload = {
+        deal_id: deal_id,
+        "netsuite_opportunity_id": opportunity[:id],
+        "amount": opportunity[:total] || opportunity[:projectedTotal],
+        "hs_deal_stage_probability": opportunity[:probability],
+        "closedate": opportunity[:expectedCloseDate] || opportunity[:expectedClose],
+        "dealname": opportunity[:title]
+      }.compact
+
+      updated_deal = update_hs_deal(payload)
+      Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{opportunity[:id]}] HubSpot deal updated from opportunity"
+      updated_deal
+    end
+
     private
       def get_stage_from_pl(stage_code)
         Hubspot::Deal::ESTIMATE_STAGES.select { |a| a[:id] == stage_code }.first[:label]
