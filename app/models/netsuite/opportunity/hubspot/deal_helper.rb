@@ -19,13 +19,11 @@ module Netsuite::Opportunity::Hubspot::DealHelper
       end
 
       def payload_to_update_deal(deal_id)
-        puts args[:opportunity]
+        probability = args[:opportunity][:probability].to_f
         {
           deal_id: deal_id,
           "amount": args[:opportunity][:total],
-          "hs_deal_stage_probability": args[:opportunity][:probability],
-
-          # "blank": args[:opportunity][:custbody_current_stage][:refName],
+          "hs_deal_stage_probability": probability > 1 ? probability / 100.0 : probability,
           "closedate": args[:opportunity][:expectedCloseDate]
         }
       end

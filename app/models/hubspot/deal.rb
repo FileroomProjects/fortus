@@ -24,6 +24,12 @@ module Hubspot
       deal&.with_indifferent_access
     end
 
+    # Create associations from a deal to another object type (e.g. companies, contacts).
+    def self.create_association(body, to_object_type)
+      client = Hubspot::Client.new(body: body)
+      client.create_association("deals", to_object_type)
+    end
+
     # Fetch child deals associated with a parent deal.
     def self.child_deals(parent_deal_id)
       client = Hubspot::Client.new(body: { from_object_id: parent_deal_id })

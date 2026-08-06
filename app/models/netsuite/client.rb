@@ -22,6 +22,10 @@ module Netsuite
       search_contact(query_str)
     end
 
+    def search_contact_by_company(company_id)
+      search_contact("company EQUAL \"#{company_id}\"")
+    end
+
     def search_customer_by_properties
       query_str = "SELECT * FROM customer WHERE LOWER(#{body[:columnName]}) = LOWER('#{body[:value]}')"
       url = "#{SUITEQL_URL}?limit=1&offset=0"
