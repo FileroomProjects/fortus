@@ -23,5 +23,11 @@ module Hubspot
       order = client.update_order
       order&.with_indifferent_access
     end
+
+    # Create associations from an order to another object type (e.g. deals).
+    def self.create_association(body, to_object_type)
+      client = Hubspot::Client.new(body: body)
+      client.create_association("orders", to_object_type)
+    end
   end
 end

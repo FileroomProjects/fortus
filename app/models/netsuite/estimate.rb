@@ -14,6 +14,11 @@ module Netsuite
       estimate&.with_indifferent_access
     end
 
+    def self.find_by_opportunity(opportunity_id)
+      client = Netsuite::Client.new({})
+      client.find_transactions_by_opportunity(opportunity_id, "Estimate").map(&:with_indifferent_access)
+    end
+
     def self.fetch_items(ns_estimate_id)
       client = Netsuite::Client.new({})
       results = client.fetch_estimate_items(ns_estimate_id)

@@ -75,6 +75,24 @@ module Netsuite
       JSON.parse(response.parsed_response)
     end
 
+    def suiteql(query)
+      response = post_request(SUITEQL_URL, { q: query }, headers_with_prefer)
+
+      handle_error("suiteql", response) unless response.code == 200
+
+      JSON.parse(response.parsed_response)["items"] || []
+    end
+
+    def find_transactions_by_opportunity(opportunity_id, type)
+      query = <<~SQL.squish
+        SELECT id, tranid, type, status, foreigntotal
+        FROM transaction
+        WHERE type = '#{type}'
+          AND opportunity = #{opportunity_id.to_i}
+      SQL
+      suiteql(query)
+    end
+
     private
       def search_contact(query_str)
         response = search_query("#{BASE_URL}/contact", { q: query_str, limit: 1, offset: 0 }, headers)

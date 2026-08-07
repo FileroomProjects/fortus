@@ -61,11 +61,119 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
 
       updated_deal = update_hs_deal(payload)
       link_opportunity_company_and_contact(opportunity)
+      link_opportunity_quotes_and_orders(opportunity)
       Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [UPDATE] [deal_id: #{deal_id}, opportunity_id: #{opportunity[:id]}] HubSpot deal updated from opportunity"
       updated_deal
     end
 
     private
+      def link_opportunity_quotes_and_orders(opportunity)
+        link_opportunity_quotes(opportunity)
+        link_opportunity_sales_orders(opportunity)
+      end
+
+      def link_opportunity_quotes(opportunity)
+        estimates = Netsuite::Estimate.find_by_opportunity(opportunity[:id])
+        if estimates.blank?
+          Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [SKIP] [deal_id: #{deal_id}, opportunity_id: #{opportunity[:id]}] No NetSuite estimates found to link"
+          return
+        end
+
+        estimates.each do |estimate|
+          hs_child_deal = find_or_create_hs_quote_deal(estimate, opportunity)
+          next unless object_present_with_id?(hs_child_deal)
+
+          associate_deal_with(hs_child_deal[:id], "deals", "deal_to_deal")
+        end
+      end
+
+      def link_opportunity_sales_orders(opportunity)
+        sales_orders = Netsuite::SalesOrder.find_by_opportunity(opportunity[:id])
+        if sales_orders.blank?
+          Rails.logger.info "[INFO] [SYNC.NETSUITE_TO_HUBSPOT.OPPORTUNITY] [SKIP] [deal_id: #{deal_id}, opportunity_id: #{opportunity[:id]}] No NetSuite sales orders found to link"
+          return
+        end
+
+        sales_orders.each do |sales_order|
+          hs_order = find_or_create_hs_order(sales_order)
+          next unless object_present_with_id?(hs_order)
+
+          associate_order_with_deal(hs_order[:id])
+        end
+      end
+
+      def find_or_create_hs_quote_deal(estimate, opportunity)
+        estimate_id = estimate[:id]
+        hs_child_deal = find_hs_deal(
+          [
+            build_search_filter("netsuite_quote_id", "EQ", estimate_id),
+            build_search_filter("pipeline", "EQ", Hubspot::Constants::NETSUITE_QUOTE_PIPELINE)
+          ],
+          raise_error: false
+        )
+        return hs_child_deal if object_present_with_id?(hs_child_deal)
+
+        ns_estimate = Netsuite::Estimate.show(estimate_id)
+        title = ns_estimate[:title] || ns_estimate[:tranId] || estimate[:title] || estimate[:tranid] || estimate_id
+        amount = ns_estimate[:total] || estimate[:foreigntotal]
+        stage = quote_dealstage_for_status(ns_estimate[:status] || estimate[:status])
+
+        create_hs_deal({
+          "properties": {
+            "dealname": "#{title} - #{estimate_id}",
+            "pipeline": Hubspot::Constants::NETSUITE_QUOTE_PIPELINE,
+            "dealstage": stage,
+            "netsuite_quote_id": estimate_id,
+            "netsuite_opportunity_id": opportunity[:id],
+            "amount": amount,
+            "netsuite_location": netsuite_estimate_location(estimate_id),
+            "netsuite_origin": "netsuite",
+            "is_child": "true"
+          }.compact
+        })
+      end
+
+      def find_or_create_hs_order(sales_order)
+        sales_order_id = sales_order[:id]
+        hs_order = find_hs_order(
+          [ build_search_filter("netsuite_order_number", "EQ", sales_order_id) ]
+        )
+        return hs_order if object_present_with_id?(hs_order)
+
+        ns_sales_order = Netsuite::SalesOrder.show(sales_order_id)
+        create_hs_order({
+          "properties": {
+            "hs_order_name": ns_sales_order[:memo] || ns_sales_order[:tranId] || sales_order[:tranid] || sales_order_id,
+            "netsuite_order_number": sales_order_id,
+            "hs_total_price": ns_sales_order[:total] || sales_order[:foreigntotal],
+            "hs_external_created_date": ns_sales_order[:tranDate],
+            "hs_external_order_status": ns_sales_order.dig(:status, :id) || ns_sales_order[:status] || sales_order[:status],
+            "hs_currency_code": "AUD"
+          }.compact
+        })
+      end
+
+      def quote_dealstage_for_status(status)
+        status_id = status.is_a?(Hash) ? status[:id] : status
+        case status_id.to_s
+        when "14", /closed.?lost/i
+          Hubspot::Constants::NETSUITE_QUOTE_CLOSED_LOST_STAGE
+        else
+          Hubspot::Constants::NETSUITE_QUOTE_OPEN_STAGE
+        end
+      end
+
+      def associate_order_with_deal(order_id)
+        payload = payload_to_associate(order_id, deal_id, "order_to_deal")
+        results = Hubspot::Order.create_association(payload, "deals")
+
+        if results.blank?
+          raise "Failed to associate order #{order_id} with deal #{deal_id}"
+        end
+
+        Rails.logger.info "[INFO] [API.HUBSPOT.ASSOCIATION] [CREATE] [deal_id: #{deal_id}, order_id: #{order_id}] Order associated with deal successfully"
+      end
+
       def link_opportunity_company_and_contact(opportunity)
         hs_company = find_or_create_hs_company_from_opportunity(opportunity)
         hs_contact = find_or_create_hs_contact_from_opportunity(opportunity)

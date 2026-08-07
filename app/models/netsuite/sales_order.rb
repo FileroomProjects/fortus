@@ -2,6 +2,17 @@ module Netsuite
   class SalesOrder < Netsuite::Base
     include Netsuite::SalesOrder::Hubspot::BaseHelper
 
+    def self.show(ns_sales_order_id)
+      client = Netsuite::Client.new({})
+      sales_order = client.fetch_object("salesOrder", ns_sales_order_id)
+      sales_order&.with_indifferent_access
+    end
+
+    def self.find_by_opportunity(opportunity_id)
+      client = Netsuite::Client.new({})
+      client.find_transactions_by_opportunity(opportunity_id, "SalesOrd").map(&:with_indifferent_access)
+    end
+
     def sync_sales_order_with_hubspot
       find_associated_hubspot_records
       hs_order = update_or_create_hubspot_order
