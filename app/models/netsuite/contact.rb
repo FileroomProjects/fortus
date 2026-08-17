@@ -5,6 +5,12 @@ module Netsuite
       client.create_object("contact")
     end
 
+    def self.update(ns_contact_id, args = {})
+      client = Netsuite::Client.new(args)
+      result = client.update_object("contact", ns_contact_id)
+      { id: result[:id].presence || ns_contact_id }.with_indifferent_access
+    end
+
     def self.find_by_id(args = {})
       client = Netsuite::Client.new(args)
       contact = client.search_contact_by_id

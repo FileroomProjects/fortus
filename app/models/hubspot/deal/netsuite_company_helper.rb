@@ -13,7 +13,10 @@ module Hubspot::Deal::NetsuiteCompanyHelper
 
       ns_customer = find_or_create_netsuite_customer(hs_company_details)
 
-      return if ns_customer == "found by id" # No need to update hubspot company
+      if ns_customer == "synced by id"
+        Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [COMPLETE] [company_id: #{company_id(hs_company_details)}] Company synchronized successfully"
+        return
+      end
 
       Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [CREATE] [company_id: #{company_id(hs_company_details)}, customer_id: #{ns_customer[:id]}] Netsuite customer created successfully"
       updated_company = update_hubspot_company(hs_company_details, ns_customer)
@@ -26,24 +29,36 @@ module Hubspot::Deal::NetsuiteCompanyHelper
       def find_or_create_netsuite_customer(hs_company_details)
         ns_company_id = hs_company_details[:netsuite_company_id]&.fetch("value", "")
         company_name = hs_company_details[:name]&.fetch("value", "")
-        company_category = hs_company_details[:category]&.fetch("value", "")
 
         raise "Netsuite Company ID & name are blank in Hubspot company details" if ns_company_id.blank? && company_name.blank?
 
         Rails.logger.info "[INFO] [SYNC.HUBSPOT_TO_NETSUITE.COMPANY] [START] [company_id: #{company_id(hs_company_details)}] Initiating company synchronization"
 
-        return "found by id" if ns_company_id.present? && ns_customer_found_by_id?(ns_company_id)
+        if ns_company_id.present? && ns_customer_found_by_id?(ns_company_id)
+          sync_existing_netsuite_customer(ns_company_id, hs_company_details)
+          return "synced by id"
+        end
 
-        return find_or_create_ns_customer_by_company_name(company_name,company_category) if company_name.present?
+        return find_or_create_ns_customer_by_company_name(hs_company_details) if company_name.present?
 
         raise "Netsuite Company name is missing in Hubspot company details & no customer was found by netsuite_company_id: #{ns_company_id}"
       end
 
+      def sync_existing_netsuite_customer(ns_company_id, hs_company_details)
+        # Bi-directional fields: HubSpot → NetSuite
+        update_ns_customer(ns_company_id, hs_company_details)
+
+        # NetSuite → HubSpot for one-way + bi-directional fields
+        ns_customer = fetch_ns_customer(ns_company_id)
+        properties = hubspot_company_properties_from_ns_customer(ns_customer, netsuite_company_id: ns_company_id)
+        update_hs_company({ companyId: company_id(hs_company_details) }.merge(properties))
+      end
+
       def update_hubspot_company(hs_company_details, ns_customer)
+        properties = hubspot_company_properties_from_ns_customer(ns_customer, netsuite_company_id: ns_customer[:id])
         update_hs_company({
-          companyId: company_id(hs_company_details),
-          "netsuite_company_id": (ns_customer[:id])
-        })
+          companyId: company_id(hs_company_details)
+        }.merge(properties))
       end
 
       def company_id(hs_company_details)

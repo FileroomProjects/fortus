@@ -22,7 +22,7 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
         [ :id,   :build_company_filter_with_id ],
         [ :name, :build_company_filter_with_name ]
       ].each do |key, builder|
-        next unless args[:customer][key].present?
+        next unless company_lookup_value(key).present?
         hs_company = find_hs_company(send(builder), raise_error: false)
         return hs_company if object_present_with_id?(hs_company)
       end
@@ -51,24 +51,27 @@ module Netsuite::Estimate::Hubspot::CompanyHelper
 
       def build_company_filter_with_name
         [
-          build_search_filter("name", "EQ", args[:customer][:name])
+          build_search_filter("name", "EQ", company_lookup_value(:name))
         ]
       end
 
+      def company_lookup_value(key)
+        case key
+        when :id
+          args[:customer][:id]
+        when :name
+          args[:customer][:name].presence || args[:customer][:companyName].presence
+        end
+      end
+
       def payload_to_update_hubspot_company(hs_company_id)
-        {
-          companyId: hs_company_id,
-          "name": args[:customer][:name],
-          "netsuite_company_id": args[:customer][:id]
-        }
+        properties = hubspot_company_properties_from_ns_customer(args[:customer], netsuite_company_id: args[:customer][:id])
+        { companyId: hs_company_id }.merge(properties)
       end
 
       def payload_to_create_hubspot_company
         {
-          "properties": {
-            "name": args[:customer][:name],
-            "netsuite_company_id": args[:customer][:id]
-          }
+          "properties": hubspot_company_properties_from_ns_customer(args[:customer], netsuite_company_id: args[:customer][:id])
         }
       end
   end

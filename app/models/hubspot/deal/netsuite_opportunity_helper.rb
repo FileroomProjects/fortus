@@ -189,19 +189,20 @@ module Hubspot::Deal::NetsuiteOpportunityHelper
           return nil
         end
 
+        ns_customer = Netsuite::Customer.show(ns_customer_id)
+        properties = hubspot_company_properties_from_ns_customer(ns_customer, netsuite_company_id: ns_customer_id)
+        properties["name"] ||= opportunity.dig(:entity, :refName)
+
         hs_company = find_hs_company(
           [ build_search_filter("netsuite_company_id", "EQ", ns_customer_id) ],
           raise_error: false
         )
-        return hs_company if object_present_with_id?(hs_company)
 
-        ns_customer = Netsuite::Customer.show(ns_customer_id)
-        create_hs_company({
-          "properties": {
-            "name": ns_customer[:companyName] || ns_customer[:entityId] || opportunity.dig(:entity, :refName),
-            "netsuite_company_id": ns_customer_id
-          }
-        })
+        if object_present_with_id?(hs_company)
+          return update_hs_company({ companyId: hs_company[:id] }.merge(properties))
+        end
+
+        create_hs_company({ "properties": properties })
       end
 
       def find_or_create_hs_contact_from_opportunity(opportunity)
